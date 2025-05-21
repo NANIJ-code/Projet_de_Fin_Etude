@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
+    'core', # l'application principale
     'corsheaders',  # Activer la communication entre le frontend et le backend
     'rest_framework',  # API REST
 ]
