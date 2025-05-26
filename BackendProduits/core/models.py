@@ -19,12 +19,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
-#import File pour la gestion des fichiers
 from django.core.files import File 
-#importe io pour la gestion des flux de données
+#import File pour la gestion des fichiers
 from io import BytesIO 
-#importe la classe Q pour les requêtes complexes
+#importe io pour la gestion des flux de données
 from django.db.models import Q
+#importe la classe Q pour les requêtes complexes
 
 class Produit(models.Model):
     uuid_produit= models.UUIDField(default=uuid.uuid4, unique= True, editable=False)
@@ -113,3 +113,23 @@ def generate_qr_code(sender, instance, created, **kwargs):
         # Enregistrement de l'image dans le champ ImageField
         qr_code = QRcode(produit=instance)
         qr_code.image.save(f"qr_code_{instance.nom}-{instance.id}.png", File(buffer))
+
+
+class Alerte(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    message = models.TextField()
+    date_alerte = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Alerte pour {self.produit.nom} - {self.message}"
+    
+class Transaction(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    emeteur = models.CharField(max_length=255)
+    destinataire = models.CharField(max_length=255)
+    date_transaction = models.DateTimeField(auto_now_add=True)
+    type_transaction = models.CharField(max_length=50)  # 'ajout' ou 'retrait'
+    quantite = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.type_transaction} de {self.quantite} unités de {self.produit.nom} le {self.date_transaction}"

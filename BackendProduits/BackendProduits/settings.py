@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ls=)e%wpdj6q!(drb5%jww9ghx5d--=sk0ewv9n71_0w+h9&$v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ['*']  # Autoriser toutes les adresses IP pour le développement local
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'core', # l'application principale
     'corsheaders',  # Activer la communication entre le frontend et le backend
     'rest_framework',  # API REST
+    'users',  # Application pour la gestion des utilisateurs
 ]
 
 MIDDLEWARE = [
