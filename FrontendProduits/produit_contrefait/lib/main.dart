@@ -1,0 +1,57 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:produit_contrefait/providers/product_provider.dart';
+import 'package:produit_contrefait/screens/product/product_screen.dart';
+
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Détection Contrefaçon',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.light(
+          primary: const Color(0xFF42A5F5), // Bleu ciel
+          secondary: const Color(0xFF64B5F6), // Bleu ciel plus clair
+          surface: Colors.white,
+          background: const Color(0xFFF5F9FF), // Fond très légèrement bleuté
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Color(0xFF42A5F5)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF42A5F5),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        cardTheme: CardTheme(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: Colors.white,
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: const Color(0xFF42A5F5),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      home: const ProductScreen(),
+    );
+  }
+}
