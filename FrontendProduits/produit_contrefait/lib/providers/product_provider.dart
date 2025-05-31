@@ -24,16 +24,25 @@ class ProductProvider with ChangeNotifier {
     // Vous pourriez aussi ajouter un SnackBar ici si vous préférez
   }
 
-  void removeProduct(int id) {
-    _products.removeWhere((p) => p.id == id);
-    notifyListeners();
+  Future<void> removeProduct(int id) async {
+    // ...code de suppression...
   }
 
-  void updateProduct(Product updatedProduct) {
-    final index = _products.indexWhere((p) => p.id == updatedProduct.id);
-    if (index != -1) {
-      _products[index] = updatedProduct;
-      notifyListeners();
+  Future<void> updateProduct(Product product, Map<String, dynamic> data) async {
+    final response = await http.patch(
+      Uri.parse('http://localhost:8000/api/produits/${product.id}/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      // Mets à jour localement
+      final index = _products.indexWhere((p) => p.id == product.id);
+      if (index != -1) {
+        _products[index] = Product.fromJson(jsonDecode(response.body));
+        notifyListeners();
+      }
+    } else {
+      throw Exception('Erreur lors de la modification');
     }
   }
 

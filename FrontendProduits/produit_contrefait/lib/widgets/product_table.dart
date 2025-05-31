@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
+import '../models/product.dart';
 
 class ProductTable extends StatelessWidget {
   const ProductTable({super.key});
@@ -59,7 +60,6 @@ class ProductTable extends StatelessWidget {
                               DataCell(Center(child: Text(product.supplier))),
                               DataCell(Center(child: Text(product.price.toString()))),
                               DataCell(Center(child: Text(product.quantity.toString()))),
-                              DataCell(Center(child: Text(product.productionDate))),
                               DataCell(Center(child: Text(product.expirationDate))),
                               DataCell(
                                 Center(
@@ -92,17 +92,18 @@ class ProductTable extends StatelessWidget {
                                     IconButton(
                                       icon: const Icon(Icons.edit, color: Colors.blue),
                                       tooltip: 'Modifier',
-                                      onPressed: () {
-                                        Provider.of<ProductProvider>(context, listen: false)
-                                            .updateProduct(product);
+                                      onPressed: () async {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => EditProductDialog(product: product),
+                                        );
                                       },
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete, color: Colors.red),
                                       tooltip: 'Supprimer',
-                                      onPressed: () {
-                                        Provider.of<ProductProvider>(context, listen: false)
-                                            .removeProduct(product.id);
+                                      onPressed: () async {
+                                        await Provider.of<ProductProvider>(context, listen: false).removeProduct(product.id);
                                       },
                                     ),
                                   ],
@@ -117,7 +118,6 @@ class ProductTable extends StatelessWidget {
                         DataColumn(label: Center(child: Text('Fournisseur'))),
                         DataColumn(label: Center(child: Text('Prix'))),
                         DataColumn(label: Center(child: Text('Quantité'))),
-                        DataColumn(label: Center(child: Text('Date enregistrement'))),
                         DataColumn(label: Center(child: Text('Date expiration'))),
                         DataColumn(label: Center(child: Text('QR Code'))),
                         DataColumn(label: Center(child: Text('Action'))),
@@ -130,6 +130,110 @@ class ProductTable extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class EditProductDialog extends StatefulWidget {
+  final Product product;
+  const EditProductDialog({super.key, required this.product});
+
+  @override
+  State<EditProductDialog> createState() => _EditProductDialogState();
+}
+
+class _EditProductDialogState extends State<EditProductDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController nameController;
+  late TextEditingController supplierController;
+  late TextEditingController priceController;
+  late TextEditingController quantityController;
+  late TextEditingController expirationDateController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: widget.product.name);
+    supplierController = TextEditingController(text: widget.product.supplier);
+    priceController = TextEditingController(text: widget.product.price.toString());
+    quantityController = TextEditingController(text: widget.product.quantity.toString());
+    expirationDateController = TextEditingController(text: widget.product.expirationDate);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    supplierController.dispose();
+    priceController.dispose();
+    quantityController.dispose();
+    expirationDateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Modifier le produit'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Nom'),
+                validator: (value) => value == null || value.isEmpty ? 'Champ requis' : null,
+              ),
+              TextFormField(
+                controller: supplierController,
+                decoration: const InputDecoration(labelText: 'Fournisseur'),
+                validator: (value) => value == null || value.isEmpty ? 'Champ requis' : null,
+              ),
+              TextFormField(
+                controller: priceController,
+                decoration: const InputDecoration(labelText: 'Prix'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value == null || value.isEmpty ? 'Champ requis' : null,
+              ),
+              TextFormField(
+                controller: quantityController,
+                decoration: const InputDecoration(labelText: 'Quantité'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value == null || value.isEmpty ? 'Champ requis' : null,
+              ),
+              TextFormField(
+                controller: expirationDateController,
+                decoration: const InputDecoration(labelText: 'Date expiration'),
+                validator: (value) => value == null || value.isEmpty ? 'Champ requis' : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Annuler'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (_formKey.currentState!.validate()) {
+              final data = {
+                'nom': nameController.text,
+                'fournisseur': supplierController.text,
+                'prix': double.tryParse(priceController.text) ?? 0,
+                'quantite': int.tryParse(quantityController.text) ?? 0,
+                'date_expiration': expirationDateController.text,
+              };
+              await Provider.of<ProductProvider>(context, listen: false)
+                  .updateProduct(widget.product, data);
+              Navigator.of(context).pop();
+            }
+          },
+          child: const Text('Enregistrer'),
+        ),
+      ],
     );
   }
 }
