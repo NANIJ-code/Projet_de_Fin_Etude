@@ -32,7 +32,7 @@ class Produit(models.Model):
     fournisseur = models.TextField()
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     quantite = models.PositiveIntegerField(default=1)
-    #date_enregistrement = models.DateField(auto_now_add=True)
+    date_enregistrement = models.DateField(auto_now_add=True)
     date_expiration = models.DateField()
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
 

@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:produit_contrefait/providers/product_provider.dart';
-import 'package:produit_contrefait/screens/product/product_screen.dart';
+import 'package:produit_contrefait/screens/auth/login_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/dashboard/dashboard_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/scan/scan_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/user/user_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/product/product_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/alerts/alerts_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/settings/settings_screen.dart'; // Ajouté
 
 void main() {
   runApp(
@@ -50,7 +56,16 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
       ),
-      home: const ProductScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
+        '/scan': (context) => const ScanScreen(),
+        '/user': (context) => const UserScreen(),
+        '/product': (context) => const ProductScreen(),
+        '/alerts': (context) => const AlertsScreen(),
+        '/settings': (context) => const SettingsScreen(),
+      },
     );
   }
 }

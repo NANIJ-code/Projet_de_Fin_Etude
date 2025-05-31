@@ -1,394 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:intl/intl.dart';
-import '../../models/product.dart';
-import '../../providers/product_provider.dart';
+import '../providers/product_provider.dart';
 
 class ProductTable extends StatelessWidget {
   const ProductTable({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final products = Provider.of<ProductProvider>(context).products;
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      margin: const EdgeInsets.all(16),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: ListView(
-              // Remplacez Column par ListView ici
-              children: [
-                const Text(
-                  "Liste des Produits",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                products.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.inventory_2, size: 48, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text(
-                              "Aucun produit enregistré",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            columnSpacing: 24,
-                            horizontalMargin: 16,
-                            headingRowHeight: 48,
-                            dataRowMinHeight: 56,
-                            dataRowMaxHeight: 56,
-                            headingRowColor: WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) => const Color(0xFFE3F2FD),
-                            ),
-                            columns: const [
-                              DataColumn(label: Text("Nom")),
-                              DataColumn(label: Text("Fournisseur")),
-                              DataColumn(label: Text("Date d'enregistrement")),
-                              DataColumn(label: Text("Date d'expiration")),
-                              DataColumn(label: Text("Position")),
-                              DataColumn(label: Text("Code QR")),
-                              DataColumn(label: Text("Actions")),
-                            ],
-                            rows: products.isEmpty
-                                ? [
-                                    const DataRow(
-                                      cells: [
-                                        DataCell(Text('-')),
-                                        DataCell(Text('-')),
-                                        DataCell(Text('-')),
-                                        DataCell(Text('-')),
-                                        DataCell(Text('-')),
-                                        DataCell(Text('-')),
-                                        DataCell(Text('-')),
-                                      ],
-                                    ),
-                                  ]
-                                : products.asMap().entries.map((entry) {
-                                    final index = entry.key;
-                                    final product = entry.value;
-                                    return DataRow(
-                                      cells: [
-                                        DataCell(
-                                          SizedBox(
-                                            width: constraints.maxWidth * 0.15,
-                                            child: Text(
-                                              product.name,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          SizedBox(
-                                            width: constraints.maxWidth * 0.15,
-                                            child: Text(
-                                              product.supplier,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(Text(_formatDate(product.productionDate))),
-                                        DataCell(
-                                          Text(
-                                            _formatDate(product.expirationDate),
-                                            style: TextStyle(
-                                              color: _isExpired(product.expirationDate)
-                                                  ? Colors.red
-                                                  : null,
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(Text('${index + 1}')),
-                                        DataCell(
-                                          InkWell(
-                                            onTap: () => _showQrDialog(context, product),
-                                            child: QrImageView(
-                                              data: product.qrCode,
-                                              size: 36,
-                                              backgroundColor: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(Icons.edit),
-                                                color: Colors.blue,
-                                                onPressed: () => _editProduct(context, product),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.delete),
-                                                color: Colors.red,
-                                                onPressed: () => _confirmDelete(context, product.id),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
-                          ),
-                        ),
+    return FutureBuilder(
+      future: Provider.of<ProductProvider>(context, listen: false).fetchProducts(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Consumer<ProductProvider>(
+          builder: (context, provider, _) {
+            final products = provider.filteredProducts;
+            if (products.isEmpty) {
+              return const Center(child: Text('Aucun produit enregistré.'));
+            }
+            return Center(
+              child: Card(
+                elevation: 8,
+                shadowColor: const Color(0xFF607D8B).withAlpha(51), // 0.2*255 ≈ 51
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                  constraints: const BoxConstraints(minWidth: 900),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      headingRowColor: WidgetStateProperty.all(const Color(0xFF1565C0)),
+                      headingTextStyle: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        letterSpacing: 1,
                       ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return DateFormat('dd/MM/yyyy').format(date);
-    } catch (e) {
-      return dateString;
-    }
-  }
-
-  bool _isExpired(String expirationDate) {
-    try {
-      final expDate = DateTime.parse(expirationDate);
-      return expDate.isBefore(DateTime.now());
-    } catch (e) {
-      return false;
-    }
-  }
-
-  void _confirmDelete(BuildContext context, String id) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Confirmer la suppression"),
-        content: const Text("Voulez-vous vraiment supprimer ce produit ?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Annuler"),
-          ),
-          TextButton(
-            onPressed: () {
-              Provider.of<ProductProvider>(context, listen: false)
-                  .removeProduct(id);
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(
-                  content: Text("Produit supprimé"),
-                ),
-              );
-            },
-            child: const Text(
-              "Supprimer",
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _editProduct(BuildContext context, Product product) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: _EditProductForm(product: product),
-      ),
-    );
-  }
-
-  void _showQrDialog(BuildContext context, Product product) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "QR Code du Produit",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[800],
-                ),
-              ),
-              const SizedBox(height: 16),
-              QrImageView(
-                data: product.qrCode,
-                size: 200,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                product.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text("ID: ${product.id}"),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text("Fermer"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EditProductForm extends StatefulWidget {
-  final Product product;
-  
-  const _EditProductForm({required this.product});
-
-  @override
-  State<_EditProductForm> createState() => _EditProductFormState();
-}
-
-class _EditProductFormState extends State<_EditProductForm> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _supplierController;
-  late DateTime _productionDate;
-  late DateTime _expirationDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.product.name);
-    _supplierController = TextEditingController(text: widget.product.supplier);
-    _productionDate = DateTime.parse(widget.product.productionDate);
-    _expirationDate = DateTime.parse(widget.product.expirationDate);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            "Modifier le Produit",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: "Nom du produit",
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _supplierController,
-            decoration: const InputDecoration(
-              labelText: "Fournisseur",
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _productionDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (date != null) {
-                      setState(() => _productionDate = date);
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: "Date de production",
+                      dataRowMinHeight: 40,
+                      dataRowMaxHeight: 48,
+                      columnSpacing: 32,
+                      rows: List<DataRow>.generate(
+                        products.length,
+                        (index) {
+                          final product = products[index];
+                          return DataRow(
+                            color: WidgetStateProperty.resolveWith<Color?>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.blue[50];
+                                }
+                                return index % 2 == 0 ? Colors.blueGrey[50] : Colors.white;
+                              },
+                            ),
+                            cells: [
+                              DataCell(Center(child: Text(product.name))),
+                              DataCell(Center(child: Text(product.supplier))),
+                              DataCell(Center(child: Text(product.price.toString()))),
+                              DataCell(Center(child: Text(product.quantity.toString()))),
+                              DataCell(Center(child: Text(product.productionDate))),
+                              DataCell(Center(child: Text(product.expirationDate))),
+                              DataCell(
+                                Center(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: product.qrCode.isNotEmpty
+                                        ? Image.network(
+                                            product.qrCode.startsWith('http')
+                                                ? product.qrCode
+                                                : 'http://localhost:8000${product.qrCode}',
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Icon(Icons.qr_code_2, color: Colors.grey, size: 32),
+                                          )
+                                        : const Icon(Icons.qr_code_2, color: Colors.grey, size: 32),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blue),
+                                      tooltip: 'Modifier',
+                                      onPressed: () {
+                                        Provider.of<ProductProvider>(context, listen: false)
+                                            .updateProduct(product);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      tooltip: 'Supprimer',
+                                      onPressed: () {
+                                        Provider.of<ProductProvider>(context, listen: false)
+                                            .removeProduct(product.id);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      columns: const [
+                        DataColumn(label: Center(child: Text('Nom'))),
+                        DataColumn(label: Center(child: Text('Fournisseur'))),
+                        DataColumn(label: Center(child: Text('Prix'))),
+                        DataColumn(label: Center(child: Text('Quantité'))),
+                        DataColumn(label: Center(child: Text('Date enregistrement'))),
+                        DataColumn(label: Center(child: Text('Date expiration'))),
+                        DataColumn(label: Center(child: Text('QR Code'))),
+                        DataColumn(label: Center(child: Text('Action'))),
+                      ],
                     ),
-                    child: Text(DateFormat('dd/MM/yyyy').format(_productionDate)),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _expirationDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (date != null) {
-                      setState(() => _expirationDate = date);
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: "Date d'expiration",
-                    ),
-                    child: Text(DateFormat('dd/MM/yyyy').format(_expirationDate)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              final updatedProduct = Product(
-                id: widget.product.id,
-                name: _nameController.text,
-                supplier: _supplierController.text,
-                productionDate: DateFormat('yyyy-MM-dd').format(_productionDate),
-                expirationDate: DateFormat('yyyy-MM-dd').format(_expirationDate),
-                qrCode: widget.product.qrCode,
-              );
-
-              Provider.of<ProductProvider>(context, listen: false)
-                  .updateProduct(updatedProduct);
-              
-              Navigator.pop(context);
-            },
-            child: const Text("Mettre à jour"),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }

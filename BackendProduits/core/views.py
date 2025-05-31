@@ -10,7 +10,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from core.models import Produit
-from BackendProduits.core.serializers import ProduitSerializer
+from core.serializers import ProduitSerializer
 
 class ProduitViewSet(viewsets.ModelViewSet):
     """

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../models/product.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../providers/product_provider.dart';
 
 class ProductForm extends StatefulWidget {
@@ -15,6 +16,8 @@ class _ProductFormState extends State<ProductForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _supplierController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _quantityController = TextEditingController();
   DateTime? _registrationDate;
   DateTime? _expirationDate;
 
@@ -22,6 +25,8 @@ class _ProductFormState extends State<ProductForm> {
   void dispose() {
     _nameController.dispose();
     _supplierController.dispose();
+    _priceController.dispose();
+    _quantityController.dispose();
     super.dispose();
   }
 
@@ -68,6 +73,20 @@ class _ProductFormState extends State<ProductForm> {
                 controller: _supplierController,
                 label: "Fournisseur",
                 icon: Icons.business,
+              ),
+              const SizedBox(height: 20),
+              _buildTextFormField(
+                controller: _priceController,
+                label: "Prix",
+                icon: Icons.euro,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 20),
+              _buildTextFormField(
+                controller: _quantityController,
+                label: "Quantité",
+                icon: Icons.confirmation_number,
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
               Row(
@@ -127,9 +146,11 @@ class _ProductFormState extends State<ProductForm> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextFormField(
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.grey),
@@ -145,6 +166,12 @@ class _ProductFormState extends State<ProductForm> {
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Ce champ est requis';
+        }
+        if (keyboardType == TextInputType.number || keyboardType == const TextInputType.numberWithOptions(decimal: true)) {
+          final numValue = num.tryParse(value);
+          if (numValue == null) return 'Veuillez entrer un nombre valide';
+          if (label == "Quantité" && numValue <= 0) return 'Quantité > 0';
+          if (label == "Prix" && numValue < 0) return 'Prix >= 0';
         }
         return null;
       },
@@ -213,46 +240,80 @@ class _ProductFormState extends State<ProductForm> {
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       if (_registrationDate == null) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Veuillez sélectionner une date d\'enregistrement')),
         );
         return;
       }
-      
       if (_expirationDate == null) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Veuillez sélectionner une date d\'expiration')),
         );
         return;
       }
-
       if (_expirationDate!.isBefore(_registrationDate!)) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('La date d\'expiration doit être après la date d\'enregistrement')),
         );
         return;
       }
 
-      final newProduct = Product(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      final success = await _sendProductToBackend(
         name: _nameController.text,
         supplier: _supplierController.text,
+        price: double.tryParse(_priceController.text) ?? 0,
+        quantity: int.tryParse(_quantityController.text) ?? 1,
         productionDate: DateFormat('yyyy-MM-dd').format(_registrationDate!),
         expirationDate: DateFormat('yyyy-MM-dd').format(_expirationDate!),
-        qrCode: 'qr_${DateTime.now().millisecondsSinceEpoch}',
       );
 
-      Provider.of<ProductProvider>(context, listen: false).addProduct(newProduct);
-      
-      // Réinitialisation du formulaire
-      _formKey.currentState?.reset();
-      setState(() {
-        _registrationDate = null;
-        _expirationDate = null;
-      });
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Produit ajouté avec succès !')),
+        );
+        _formKey.currentState?.reset();
+        setState(() {
+          _registrationDate = null;
+          _expirationDate = null;
+        });
+        context.read<ProductProvider>().toggleFormVisibility();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur lors de l\'ajout du produit')),
+        );
+      }
     }
+  }
+
+  Future<bool> _sendProductToBackend({
+    required String name,
+    required String supplier,
+    required double price,
+    required int quantity,
+    required String productionDate,
+    required String expirationDate,
+  }) async {
+    final url = Uri.parse('http://localhost:8000/api/produits/');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'nom': name,
+        'fournisseur': supplier,
+        'prix': price,
+        'quantite': quantity,
+        'date_expiration': expirationDate,
+        'date_enregistrement': productionDate, // si tu ajoutes ce champ côté backend
+      }),
+    );
+    return response.statusCode == 201;
   }
 }
