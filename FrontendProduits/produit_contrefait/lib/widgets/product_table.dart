@@ -22,8 +22,8 @@ class ProductTable extends StatelessWidget {
         builder: (context, constraints) {
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: ListView(
+              // Remplacez Column par ListView ici
               children: [
                 const Text(
                   "Liste des Produits",
@@ -34,112 +34,127 @@ class ProductTable extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: products.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.inventory_2, size: 48, color: Colors.grey),
-                              SizedBox(height: 16),
-                              Text(
-                                "Aucun produit enregistré",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
+                products.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.inventory_2, size: 48, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              "Aucun produit enregistré",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
                               ),
-                            ],
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          scrollDirection: Axis.vertical,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columnSpacing: 24,
-                              horizontalMargin: 16,
-                              headingRowHeight: 48,
-                              dataRowHeight: 56,
-                              headingRowColor: MaterialStateProperty.resolveWith<Color>(
-                                (Set<MaterialState> states) => const Color(0xFFE3F2FD),
-                              ),
-                              columns: const [
-                                DataColumn(label: Text("No")),
-                                DataColumn(label: Text("Nom")),
-                                DataColumn(label: Text("Fournisseur")),
-                                DataColumn(label: Text("Date Prod.")),
-                                DataColumn(label: Text("Date Exp.")),
-                                DataColumn(label: Text("QR Code")),
-                                DataColumn(label: Text("Actions")),
-                              ],
-                              rows: products.map((product) {
-                                return DataRow(
-                                  cells: [
-                                    DataCell(Text('${products.indexOf(product) + 1}')),
-                                    DataCell(
-                                      SizedBox(
-                                        width: constraints.maxWidth * 0.15,
-                                        child: Text(
-                                          product.name,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      SizedBox(
-                                        width: constraints.maxWidth * 0.15,
-                                        child: Text(
-                                          product.supplier,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(Text(_formatDate(product.productionDate))),
-                                    DataCell(
-                                      Text(
-                                        _formatDate(product.expirationDate),
-                                        style: TextStyle(
-                                          color: _isExpired(product.expirationDate)
-                                              ? Colors.red
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      InkWell(
-                                        onTap: () => _showQrDialog(context, product),
-                                        child: QrImageView(
-                                          data: product.qrCode,
-                                          size: 36,
-                                          backgroundColor: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            color: Colors.blue,
-                                            onPressed: () => _editProduct(context, product),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete),
-                                            color: Colors.red,
-                                            onPressed: () => _confirmDelete(context, product.id),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
                             ),
+                          ],
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            columnSpacing: 24,
+                            horizontalMargin: 16,
+                            headingRowHeight: 48,
+                            dataRowMinHeight: 56,
+                            dataRowMaxHeight: 56,
+                            headingRowColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) => const Color(0xFFE3F2FD),
+                            ),
+                            columns: const [
+                              DataColumn(label: Text("Nom")),
+                              DataColumn(label: Text("Fournisseur")),
+                              DataColumn(label: Text("Date d'enregistrement")),
+                              DataColumn(label: Text("Date d'expiration")),
+                              DataColumn(label: Text("Position")),
+                              DataColumn(label: Text("Code QR")),
+                              DataColumn(label: Text("Actions")),
+                            ],
+                            rows: products.isEmpty
+                                ? [
+                                    const DataRow(
+                                      cells: [
+                                        DataCell(Text('-')),
+                                        DataCell(Text('-')),
+                                        DataCell(Text('-')),
+                                        DataCell(Text('-')),
+                                        DataCell(Text('-')),
+                                        DataCell(Text('-')),
+                                        DataCell(Text('-')),
+                                      ],
+                                    ),
+                                  ]
+                                : products.asMap().entries.map((entry) {
+                                    final index = entry.key;
+                                    final product = entry.value;
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(
+                                          SizedBox(
+                                            width: constraints.maxWidth * 0.15,
+                                            child: Text(
+                                              product.name,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: constraints.maxWidth * 0.15,
+                                            child: Text(
+                                              product.supplier,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(Text(_formatDate(product.productionDate))),
+                                        DataCell(
+                                          Text(
+                                            _formatDate(product.expirationDate),
+                                            style: TextStyle(
+                                              color: _isExpired(product.expirationDate)
+                                                  ? Colors.red
+                                                  : null,
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(Text('${index + 1}')),
+                                        DataCell(
+                                          InkWell(
+                                            onTap: () => _showQrDialog(context, product),
+                                            child: QrImageView(
+                                              data: product.qrCode,
+                                              size: 36,
+                                              backgroundColor: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.edit),
+                                                color: Colors.blue,
+                                                onPressed: () => _editProduct(context, product),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.delete),
+                                                color: Colors.red,
+                                                onPressed: () => _confirmDelete(context, product.id),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
                           ),
                         ),
-                ),
+                      ),
               ],
             ),
           );

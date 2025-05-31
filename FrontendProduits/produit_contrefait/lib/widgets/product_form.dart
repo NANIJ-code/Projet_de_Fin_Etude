@@ -15,7 +15,7 @@ class _ProductFormState extends State<ProductForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _supplierController = TextEditingController();
-  DateTime? _productionDate;
+  DateTime? _registrationDate;
   DateTime? _expirationDate;
 
   @override
@@ -74,9 +74,9 @@ class _ProductFormState extends State<ProductForm> {
                 children: [
                   Expanded(
                     child: _buildDateField(
-                      "Date de production",
-                      _productionDate,
-                      (date) => setState(() => _productionDate = date),
+                      "Date d'enregistrement",
+                      _registrationDate,
+                      (date) => setState(() => _registrationDate = date),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -187,9 +187,11 @@ class _ProductFormState extends State<ProductForm> {
           },
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.withOpacity(0.5)),
-              borderRadius: BorderRadius.circular(8),
+            decoration: const BoxDecoration(
+              border: Border.fromBorderSide(
+                BorderSide(color: Color.fromRGBO(158, 158, 158, 0.5)),
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,9 +215,9 @@ class _ProductFormState extends State<ProductForm> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      if (_productionDate == null) {
+      if (_registrationDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez sélectionner une date de production')),
+          const SnackBar(content: Text('Veuillez sélectionner une date d\'enregistrement')),
         );
         return;
       }
@@ -227,9 +229,9 @@ class _ProductFormState extends State<ProductForm> {
         return;
       }
 
-      if (_expirationDate!.isBefore(_productionDate!)) {
+      if (_expirationDate!.isBefore(_registrationDate!)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('La date d\'expiration doit être après la date de production')),
+          const SnackBar(content: Text('La date d\'expiration doit être après la date d\'enregistrement')),
         );
         return;
       }
@@ -238,7 +240,7 @@ class _ProductFormState extends State<ProductForm> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         supplier: _supplierController.text,
-        productionDate: DateFormat('yyyy-MM-dd').format(_productionDate!),
+        productionDate: DateFormat('yyyy-MM-dd').format(_registrationDate!),
         expirationDate: DateFormat('yyyy-MM-dd').format(_expirationDate!),
         qrCode: 'qr_${DateTime.now().millisecondsSinceEpoch}',
       );
@@ -248,7 +250,7 @@ class _ProductFormState extends State<ProductForm> {
       // Réinitialisation du formulaire
       _formKey.currentState?.reset();
       setState(() {
-        _productionDate = null;
+        _registrationDate = null;
         _expirationDate = null;
       });
     }

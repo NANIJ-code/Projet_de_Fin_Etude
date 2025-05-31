@@ -23,11 +23,10 @@ class MyApp extends StatelessWidget {
       title: 'Détection Contrefaçon',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.light(
-          primary: const Color(0xFF42A5F5), // Bleu ciel
-          secondary: const Color(0xFF64B5F6), // Bleu ciel plus clair
-          surface: Colors.white,
-          background: const Color(0xFFF5F9FF), // Fond très légèrement bleuté
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF42A5F5), // Bleu ciel
+          secondary: Color(0xFF64B5F6), // Bleu ciel plus clair
+          surface: Colors.white, // Fond très légèrement bleuté
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
@@ -39,15 +38,15 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           color: Colors.white,
         ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: const Color(0xFF42A5F5),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF42A5F5),
           foregroundColor: Colors.white,
         ),
       ),
