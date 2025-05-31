@@ -24,10 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ls=)e%wpdj6q!(drb5%jww9ghx5d--=sk0ewv9n71_0w+h9&$v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['*']  # Autoriser toutes les adresses IP pour le développement local
+ALLOWED_HOSTS = ['*']  
+# !!!!! Autoriser toutes les adresses IP pour le développement local, a modifier pour le deploiement
 
 # Application definition
 
@@ -38,10 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core', # l'application principale
-    'corsheaders',  # Activer la communication entre le frontend et le backend
-    'rest_framework',  # API REST
-    'users',  # Application pour la gestion des utilisateurs
+    'core', 
+    # core l'application principale de gestion des produist
+    'corsheaders',  
+    # Activer la communication entre le frontend et le backend
+    'rest_framework',  
+    # API REST
+    'users',  
+    # Application pour la gestion des utilisateurs
 ]
 
 MIDDLEWARE = [
@@ -91,7 +96,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'contrefacon_db',
         'USER': 'postgres',
-        'PASSWORD': '123456',
+        'PASSWORD': '123456', 
+        # Mot de passe a modifier lors du deploiement
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -135,15 +141,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Indication du répertoire de fichiers statiques
 
 # Indication du répertoire de fichiers des media
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True  # Autoriser toutes les origines pour le développement local
-# CORS_ALLOW_CREDENTIALS = True  # Autoriser les cookies et les en-têtes d'authentification
+CORS_ALLOW_ALL_ORIGINS = True  
+# !!!! Autoriser toutes les origines pour le développement local, le desactiver pour le deploiement
+
+# CORS_ALLOW_CREDENTIALS = True  
+# # Autoriser les cookies et les en-têtes d'authentification

@@ -10,11 +10,42 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from core.models import Produit
-from BackendProduits.core.serializers import ProduitSerializer
+from core.models import QRcode
+from core.serializers import ProduitSerializer
+from core.serializers import QRcodeSerializer
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
+# Vu
 class ProduitViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour le modèle Produit.
     """
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
+
+
+    @action(detail=False, methods=['get'], url_path='rechercher')
+    def rechercher(self, request):
+        """
+        Recherche de produits par mot clé dans le nom ou l'UUID.
+        """
+        mot_cle = request.query_params.get('q', '')
+        produits = Produit.rechercherProduit(mot_cle)
+        if not produits.exists():
+            return Response({"message": "Desole Produit inexistant!"}, status=404)
+        serializer = self.get_serializer(produits, many=True,context={'request': request})
+        return Response(serializer.data)
+    
+
+class QRcodeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet pour le modèle QRcode.
+    """
+    queryset = QRcode.objects.all()
+    serializer_class = QRcodeSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(qrcodes__isnull=False)
+        #Retourne uniquement les produits qui ont un QR code associé
+    
