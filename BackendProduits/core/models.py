@@ -35,8 +35,6 @@ class Produit(models.Model):
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     quantite = models.PositiveIntegerField(default=1)
     date_enregistrement = models.DateField(auto_now_add=True)
-    # Le champ position est utilisé pour stocker la position du produit dans l'entrepôt ou le magasin
-    position = models.CharField(max_length=255, default="")
     date_expiration = models.DateField()
     is_active = models.BooleanField(default=True)
     # 

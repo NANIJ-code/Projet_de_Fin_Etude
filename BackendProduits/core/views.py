@@ -9,14 +9,12 @@
 
 from django.shortcuts import render
 from rest_framework import viewsets
-from core.models import Produit
-from core.models import QRcode
-from core.serializers import ProduitSerializer
-from core.serializers import QRcodeSerializer
+from core.models import Produit, QRcode
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from BackendProduits.core.serializers import QRcodeSerializer
+from BackendProduits.core.serializers import ProduitSerializer
 
-# Vu
 class ProduitViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour le modèle Produit.
