@@ -13,6 +13,7 @@ Assurez-vous que la police "arial.ttf" est disponible sur le serveur pour l'ajou
 
 
 from django.db import models
+from users.models import Utilisateur
 
 import uuid
 from django.db.models.signals import post_save
@@ -20,6 +21,7 @@ from django.dispatch import receiver
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from django.core.files import File 
+from datetime import date
 #import File pour la gestion des fichiers
 from io import BytesIO 
 #importe io pour la gestion des flux de données
@@ -29,13 +31,12 @@ from django.db.models import Q
 class Produit(models.Model):
     uuid_produit= models.UUIDField(default=uuid.uuid4, unique= True, editable=False)
     nom = models.CharField(max_length=255)
-    fournisseur = models.TextField()
+    fournisseur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='produits')
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     quantite = models.PositiveIntegerField(default=1)
     date_enregistrement = models.DateField(auto_now_add=True)
     date_expiration = models.DateField()
-    qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
-
+    is_active = models.BooleanField(default=True)
     # 
     def __str__(self):
         return self.nom #
@@ -125,10 +126,14 @@ class Alerte(models.Model):
     
 class Transaction(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
-    emeteur = models.CharField(max_length=255)
+    emetteur = models.CharField(max_length=255)
     destinataire = models.CharField(max_length=255)
     date_transaction = models.DateTimeField(auto_now_add=True)
-    type_transaction = models.CharField(max_length=50)  # 'ajout' ou 'retrait'
+    TYPE_CHOICES = [
+        ('B2B', 'Transaction B2B'),
+        ('B2C', 'Transaction B2C'),
+    ]
+    type_transaction = models.CharField(max_length=50, choices=TYPE_CHOICES)  # 'ajout' ou 'retrait'
     quantite = models.PositiveIntegerField()
 
     def __str__(self):
