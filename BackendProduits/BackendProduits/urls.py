@@ -19,13 +19,17 @@ from django.urls import path, include
 # importation pour l'acces aux fichiers media
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+# Importation des vues pour l'authentification JWT
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),  # Inclure les URLs d'authentification de l'API
-    path('api/', include('core.urls')),  # Inclure les URLs de l'API
-
+    path('api_produits/', include('core.urls')),  # Inclure les URLs de l'API
+    path('api_user/', include('users.urls')),  # Inclure les URLs de l'API pour les utilisateurs
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # URL pour obtenir le token JWT
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # URL pour rafraîchir le token JWT
 ]
 
 # Configuration pour servir les fichiers media en mode développement

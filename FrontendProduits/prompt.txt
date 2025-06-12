@@ -1,9 +1,0 @@
-
-4 VLAN, 1VLAN pour etudians, un enseignants, administration, administration réseau(qui aura acces à tout les autres)
-Dans le dimensionnement, nous supposerons qu'il y a une connexion haut débit qui arrive à l'iut au niveau du batiment A, 
-l'idée c'est de pouvoir recuperer la connexion et la distribuer de proche en proche à tout les vlan crée en respectant les
-restrictions données. Se rassurer d'avoir deux routeurs par batiment, 1 au rdc et un en haut, le routeur doit couvrir tout
-le niveau. Le routeur du bat A, sert de source au batiment B, qui sera à son tour la source du bat C. Réaliser l'architecture
-de manière à avoir un bon débit. La source qui arrive au batiment A doit être filaire.
-
-On doit avoir en fin, le nombre de routeur et les types de routeurs, faire le mesurage à l'IUT 

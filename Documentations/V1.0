@@ -1,0 +1,24 @@
+# Documentation technique
+
+## Architecture
+
+- **Frontend** : Flutter (Dart)
+- **Backend** : Django (Python)
+- **Base de données** : PostgreSQL
+
+## Avancement actuel
+
+- [x] Mise en place du backend Django + API REST
+- [x] Connexion à PostgreSQL
+- [x] Enregistrement des Produits et Génération de QR codes uniques
+- [x] Application Flutter : design d'interface web
+
+## À faire pour la prochaine étape
+- Créer les modèles Django Compte, Utliseur, Transaction, Alerte.
+- Créer des API REST FRAMEWORK pour les opérations CRUD sur les modèles.
+- Coder les interfaces web (dashboard, produits, utilisateurs, Alerte, paramètres. 
+- Rédiger la documentation V2.0
+
+
+
+**Dernière mise à jour : 06 juin 2025**
