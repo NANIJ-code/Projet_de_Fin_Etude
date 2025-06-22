@@ -8,6 +8,7 @@ import 'package:produit_contrefait/screens/user/user_screen.dart'; // Ajouté
 import 'package:produit_contrefait/screens/product/product_screen.dart'; // Ajouté
 import 'package:produit_contrefait/screens/alerts/alerts_screen.dart'; // Ajouté
 import 'package:produit_contrefait/screens/settings/settings_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/transaction/transaction_screen.dart'; // Ajouté
 
 void main() {
   runApp(
@@ -63,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/scan': (context) => const ScanScreen(),
         '/user': (context) => const UserScreen(),
         '/product': (context) => const ProductScreen(),
+        '/transaction': (context) => const TransactionScreen(), // Ajoute cette ligne
         '/alerts': (context) => const AlertsScreen(),
         '/settings': (context) => const SettingsScreen(),
       },

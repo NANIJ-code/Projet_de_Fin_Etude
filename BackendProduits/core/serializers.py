@@ -12,12 +12,7 @@ class ProduitSerializer(serializers.ModelSerializer):
         # Définition des champs à inclure dans le serializer  
 
     def create(self, validated_data):
-        # surcharge la méthode create pour ajouter une logique personnalisée
-        # pour assigner le fournisseur automatiquement
-        #  a un produit lors de son enregistrement
-        fournisseur = Utilisateur.objects.get(role='fournisseur')
-        validated_data['fournisseur'] = fournisseur
-        validated_data['position'] = fournisseur.nom
+        fournisseur = validated_data['fournisseur']
         return super().create(validated_data)
     
     def validate_date_expiration(self, value):

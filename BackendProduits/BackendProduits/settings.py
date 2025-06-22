@@ -158,3 +158,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # CORS_ALLOW_CREDENTIALS = True  
 # # Autoriser les cookies et les en-têtes d'authentification
+
+

@@ -12,8 +12,10 @@ from rest_framework import viewsets
 from core.models import Produit, QRcode
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from BackendProduits.core.serializers import QRcodeSerializer
-from BackendProduits.core.serializers import ProduitSerializer
+from core.serializers import QRcodeSerializer
+from .serializers import ProduitSerializer
+from users.models import Utilisateur
+from users.serializers import UtilisateurSerializer
 
 class ProduitViewSet(viewsets.ModelViewSet):
     """
@@ -46,4 +48,12 @@ class QRcodeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(qrcodes__isnull=False)
         #Retourne uniquement les produits qui ont un QR code associé
-    
+
+class FournisseurViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet pour le modèle Utilisateur, filtrant par le rôle 'fournisseur'.
+    """
+    serializer_class = UtilisateurSerializer
+
+    def get_queryset(self):
+        return Utilisateur.objects.filter(role='fournisseur')

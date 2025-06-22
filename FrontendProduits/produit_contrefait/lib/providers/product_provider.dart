@@ -2,11 +2,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/product.dart';
+import '../models/utilisateur.dart'; // Ajoute cet import
 
 class ProductProvider with ChangeNotifier {
   bool _showForm = false;
-  final List<Product> _products = [];
+  List<Product> _products = [];
   String _searchQuery = '';
+
+  final List<Utilisateur> _fournisseurs = [];
+  List<Utilisateur> get fournisseurs => List.unmodifiable(_fournisseurs);
 
   bool get showForm => _showForm;
   List<Product> get products => List.unmodifiable(_products);
@@ -21,11 +25,17 @@ class ProductProvider with ChangeNotifier {
     _products.insert(0, product); // Ajoute en haut de la liste
     notifyListeners();
     toggleFormVisibility();
-    // Vous pourriez aussi ajouter un SnackBar ici si vous préférez
   }
 
   Future<void> removeProduct(int id) async {
-    // ...code de suppression...
+    final response =
+        await http.delete(Uri.parse('http://localhost:8000/api/produits/$id/'));
+    if (response.statusCode == 204) {
+      _products.removeWhere((p) => p.id == id);
+      notifyListeners();
+    } else {
+      throw Exception('Erreur lors de la suppression');
+    }
   }
 
   Future<void> updateProduct(Product product, Map<String, dynamic> data) async {
@@ -35,7 +45,6 @@ class ProductProvider with ChangeNotifier {
       body: jsonEncode(data),
     );
     if (response.statusCode == 200) {
-      // Mets à jour localement
       final index = _products.indexWhere((p) => p.id == product.id);
       if (index != -1) {
         _products[index] = Product.fromJson(jsonDecode(response.body));
@@ -53,22 +62,50 @@ class ProductProvider with ChangeNotifier {
 
   List<Product> get filteredProducts {
     if (_searchQuery.isEmpty) return products;
-    return products.where((p) =>
-      p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      p.supplier.toLowerCase().contains(_searchQuery.toLowerCase())
-    ).toList();
+    return products
+        .where((p) =>
+            p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            p.supplier.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
   }
 
   Future<void> fetchProducts() async {
     final response =
         await http.get(Uri.parse('http://localhost:8000/api/produits/'));
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      _products.clear();
-      _products.addAll(data.map((item) => Product.fromJson(item)).toList());
+      final List data = jsonDecode(response.body);
+      _products = data.map((e) => Product.fromJson(e)).toList();
       notifyListeners();
     } else {
-      throw Exception('Erreur lors du chargement des produits');
+      throw Exception('Erreur de chargement des produits');
+    }
+  }
+
+  // AJOUTE CETTE MÉTHODE POUR CHARGER LES FOURNISSEURS
+  Future<void> fetchFournisseurs() async {
+    final response =
+        await http.get(Uri.parse('http://localhost:8000/api/fournisseurs/'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      _fournisseurs.clear();
+      _fournisseurs
+          .addAll(data.map((item) => Utilisateur.fromJson(item)).toList());
+      notifyListeners();
+    } else {
+      throw Exception('Erreur lors du chargement des fournisseurs');
+    }
+  }
+}
+
+class ProductService {
+  static Future<List<Product>> fetchProducts() async {
+    final response =
+        await http.get(Uri.parse('http://localhost:8000/api/produits/'));
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Product.fromJson(e)).toList();
+    } else {
+      throw Exception('Erreur de chargement des produits');
     }
   }
 }

@@ -9,6 +9,7 @@ from django.contrib.auth.hashers import make_password
 
 class Compte(models.Model):
     username = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(unique=True, default="default@exemple.com")  # Ajout du champ email
     password = models.CharField(max_length=128)  # Utiliser un champ sécurisé pour le mot de passe
     is_active = models.BooleanField(default=True)
 
@@ -61,3 +62,15 @@ class Utilisateur(models.Model):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
+
+    def to_json(self):
+        return {
+            'compte': self.compte.id,  # doit être l'ID (int)
+            'nom': self.nom,
+            'telephone': self.telephone,
+            'email': self.email,
+            'pays': self.pays,
+            'ville': self.ville,
+            'adresse': self.adresse,
+            'role': self.role,
+        }
