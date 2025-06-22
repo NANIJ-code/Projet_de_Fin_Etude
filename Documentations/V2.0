@@ -1,0 +1,188 @@
+# Documentation technique – Projet de Fin d’Étude
+
+## 1. Présentation générale
+
+Ce projet vise à lutter contre la circulation de médicaments contrefaits au Cameroun à l’aide d’une application mobile et web 
+permettant de vérifier l’authenticité et la traçabilité des médicaments via des QR codes sécurisés.
+Le système couvre toute la chaîne de distribution, du fournisseur au consommateur final.
+
+## 2. Architecture technique et structure du projet
+
+Backend/
+│
+├── BackendProduits/
+│   ├── BackendProduits/         # Dossier principal de configuration du projet Django
+│   │   ├── __init__.py          # Indique que ce dossier est un package Python
+│   │   ├── asgi.py              # Point d'entrée ASGI pour le déploiement asynchrone
+│   │   ├── settings.py          # Paramètres et configuration globale du projet Django
+│   │   ├── urls.py              # Routes principales du projet (inclusion des apps)
+│   │   └── wsgi.py              # Point d'entrée WSGI pour le déploiement classique
+│   │
+│   ├── core/                    # Application principale (produits, QR codes, transactions)
+│   │   ├── __init__.py          # Indique que ce dossier est un package Python
+│   │   ├── admin.py             # Enregistrement des modèles dans l’interface d’administration Django
+│   │   ├── apps.py              # Configuration de l’application core
+│   │   ├── migrations/          # Dossier des fichiers de migration de la base de données
+│   │   ├── models.py            # Définition des modèles Produit, QRcode, Transaction, Alerte
+│   │   ├── serializers.py       # Sérialiseurs DRF pour exposer les modèles via l’API
+│   │   ├── views.py             # Vues API (CRUD, recherche, consultation, update position)
+│   │   ├── urls.py              # Routes API spécifiques à l’app core
+│   │   └── tests.py             # Tests unitaires pour l’app core
+│   │
+│   ├── users/                   # Application de gestion des utilisateurs
+│   │   ├── __init__.py          # Indique que ce dossier est un package Python
+│   │   ├── admin.py             # Enregistrement des modèles utilisateurs dans l’admin Django
+│   │   ├── apps.py              # Configuration de l’application users
+│   │   ├── migrations/          # Dossier des fichiers de migration pour users
+│   │   ├── models.py            # Modèles Compte et Utilisateur
+│   │   ├── serializers.py       # Sérialiseurs pour les modèles utilisateurs
+│   │   ├── views.py             # Vues API pour la gestion des utilisateurs
+│   │   ├── urls.py              # Routes API pour l’app users
+│   │   └── tests.py             # Tests unitaires pour l’app users
+│   │
+│   ├── media/                   # Dossier de stockage des fichiers médias (QR codes, images, etc.)
+│  
+│
+├── Documentations/              # Dossier de documentation versionnée du projet
+│   ├── V1.0/                    # Documentation version 1.0
+│   └── V2.0/                    # Documentation version 2.0
+│
+├── README.md                    # Présentation, instructions d’installation et d’utilisation du projet
+├── requirements.txt             # Liste des dépendances Python à installer
+└── .vscode/                     # (optionnel) Configurations spécifiques à Visual Studio Code
+
+### Schéma global
+*(À intégrer si des diagrammes sont disponibles)*
+
+```
+[Utilisateur]
+    |
+    | (scan QR code / consultation / action sur produit)
+    v
+[Application Flutter (Frontend)]
+    |
+    |  (requêtes HTTP : scan, consultation, création, mise à jour, transactions, alertes)
+    v
+[API Django REST (Backend)]
+    |
+    |  (ORM, logique métier, génération QR code, gestion des transactions, sécurité)
+    v
+[Base de données PostgreSQL]
+```
+
+## 3. Fonctionnalités implémentées
+
+- Génpar chaque acteur pour valider les transferts et mettre à jour l’historique
+- Consultation par le consommateur (infos : fournisseur, date d’expiration, origine, historique)
+- Détection d’anomalies (doublons, scans suspects, transferts non validés)
+- Signalement d’alertes par l’applicationération et gestion de QR codes uniques pour chaque médicament (fournisseur)
+- Enregistrement et suivi de chaque unité à chaque étape de la chaîne (fournisseur, dépôt, pharmacie)
+- Scan des QR codes 
+
+## 3. Fonctionnalités implémentées
+- Génération et gestion de QR codes uniques pour chaque médicament;
+  * Génération automatique d’un QR code à la création d’un produit (par le fournisseur).
+  * QR code personnalisé : UUID du produit encodé, 8 derniers caractères affichés sous le code.
+  * Stockage des images QR dans media/qrcodes/.
+
+- Enregistrement et suivi de chaque unité à chaque étape de la chaîne
+  * Création de produits par le fournisseur.
+  * Chaque transaction (B2B ou B2C) est enregistrée et liée au produit.
+  * Suivi de la position du produit (mise à jour possible via l’API).
+
+- Scan des QR codes et consultation détaillée
+  *  Scan ou saisie manuelle de l’identifiant (UUID complet ou 8 derniers caractères).
+  * Retour des informations détaillées sur le produit : nom, fournisseur, date d’expiration, position, état (is_active), QR code, etc.
+  * Affichage de l’historique complet des transactions subies par le produit.
+
+- Consultation par le consommateur
+  * Accès à toutes les informations du produit (fournisseur, date d’expiration, origine, historique des transactions).
+  * Message dynamique selon l’état du produit (actif, déjà vendu, ou produit suspect).
+  
+- Détection d’anomalies
+  * Gestion des cas de QR code non reconnu (message d’alerte, suggestion de recherche manuelle ou signalement).
+  * Prévention des doublons de QR code (unicité garantie par la base).
+  * Suivi des transferts et détection des transactions non validées.
+
+- Signalement d’alertes par l’application
+  * Création d’alertes liées à un produit (ex : suspicion de contrefaçon, problème de traçabilité).
+  * Historique des alertes disponible via l’API.
+
+## 4. Organisation du projet
+
+- `/FrontendProduits/` : Application Flutter (Web et Mobile)
+- `/BackendProduits/` : Application Django + API REST
+- `/Documentations/` : Documentation technique et fonctionnelle
+- `/README.md` : Présentation et guide rapide
+
+## 5. Avancement actuel
+
+- [x] Mise en place du backend Django, connexion PostgreSQL
+- [x] Endpoints API principaux (opérations CRUD sur produits et utilisateurs, recherche produits, recherche utilisateurs)
+- [x] Génération et gestion des QR codes uniques (côté fournisseur)
+- [x] Application Flutter : interfaces de scan, d’affichage produits et utilisateurs, et de connexon; tableau de bords; interface d'alerte et de paramètre 
+- [ ] Gestion avancée des droits utilisateurs
+- [ ] Module de notification/alerte complet
+- [ ] Tests automatisés (backend & frontend)
+- [ ] Documentation API détaillée
+
+## 6. Exemple de parcours utilisateur
+
+1. **Fournisseur** : Crée un médicament → QR code généré → médicament livré
+2. **Dépôt/Pharmacie** : Scan à la réception → mise à jour historique
+3. **Consommateur** : Scan du QR code → consultation de l’historique et des informations du médicament
+
+## 7. Structure de la base de données
+
+- **Compte**: id, username, password (haché), is_active.
+
+- **Utilisateur** : id, compte_id, nom, rôle, email, ville, téléphone, adresse etc.
+
+- **Produit** : id, uuid_produit (UUID unique), nom, fournisseur_id (clé étrangère vers Utilisateur), prix, quantité, date_enregistrement, date_expiration, position (texte), is_active (booléen) qr_code, etc.
+
+- **QRcode**: id, produit_id (clé étrangère, unique), image (chemin du fichier QR code).
+
+- **Transaction** : id, produit_id, emetteur, destinataire, date_transaction, type_transaction (B2B/B2C), quantité.
+
+- **Alerte** : id, produit_id, message (description), date_alerte.
+
+## 8. Endpoints principaux de l’API
+
+- POST /api_produits/produits/: **Créer un médicament (fournisseur)
+
+- POST /api_user/comptes/: **Créer un compte (fournisseur, distributeur)
+
+- GET /api_produits/produits/: **Lister tous les produits
+
+- GET /api_produits/produits/{id}/: **Obtenir les infos détaillées d’un produit (par ID)
+
+- GET /api_produits/produits/{id}/update-position/: **Mettre à jour la position d’un produit (PATCH)
+
+- GET /api_produits/produits/rechercher/?q=mot_cle: **Rechercher un produit par mot-clé (nom ou UUID partiel)
+
+- GET /api_produits/produits/<str:identifiant>/detail/: **Consulter un produit par scan ou identifiant (UUID complet ou 8 derniers caractères, infos détaillées + transactions + message)
+
+- GET /api_produits/qrcodes/: **Lister tous les QR codes
+
+- GET /api_produits/transactions/: **Lister toutes les transactions
+
+- POST /api_produits/transactions/: **Créer une transaction (B2B ou B2C)
+
+- GET /api_produits/alertes/: **Lister toutes les alertes
+
+- POST /api_produits/alertes/: **Créer une alerte
+
+
+## 9. Points à améliorer / Prochaines étapes
+
+- Securiser l'acces aux API par authentifiaction des utilisateurs
+- Finaliser la gestion des droits et rôles utilisateurs
+- Compléter le module de notifications et d’alertes
+- Ajouter des tests unitaires et d’intégration
+- Rédiger une documentation API exhaustive
+- Prévoir une documentation utilisateur pour la prise en main
+- Integrer une IA et un chatbot 
+
+---
+
+**Dernière mise à jour : 06 juin 2025**

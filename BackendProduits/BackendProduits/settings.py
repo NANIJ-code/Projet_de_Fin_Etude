@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,11 +44,28 @@ INSTALLED_APPS = [
     # core l'application principale de gestion des produist
     'corsheaders',  
     # Activer la communication entre le frontend et le backend
+    'rest_framework_simplejwt',
+    # Authentification JWT pour l'API REST
     'rest_framework',  
     # API REST
     'users',  
     # Application pour la gestion des utilisateurs
+    'gmailapi_backend' 
+    # Application pour la gestion de l'API Gmail
 ]
+
+""" Configuration REST Framework 
+    https://www.django-rest-framework.org/api-guide/settings/
+    - Utilisation de l'authentification JWT par defaut pour toutes les vues DRF
+    - Taille de page par défaut de 100 éléments
+# """
+REST_FRAMEWORK = {
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    # 'PAGE_SIZE': 100,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -123,7 +141,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# modèle utilisateur personnalisé
+AUTH_USER_MODEL = 'users.Compte'
 
+FRONTEND_LOGIN_URL = "https://monappflutter.com/"  # ou l'URL de ton frontend
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),  # Par défaut 5 min, à adapter
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -160,3 +185,12 @@ CORS_ALLOW_ALL_ORIGINS = True
 # # Autoriser les cookies et les en-têtes d'authentification
 
 
+<<<<<<< HEAD
+=======
+# configuration pour envoie des mails
+EMAIL_BACKEND = 'gmailapi_backend.mail.GmailBackend'
+GMAIL_API_CLIENT_ID = '115001624773-9donhivp1sbds0mot8qdkm1l8prbjmu1.apps.googleusercontent.com'
+GMAIL_API_CLIENT_SECRET = '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'
+GMAIL_API_REFRESH_TOKEN = '1//04eVDqUP8B_RoCgYIARAAGAQSNgF-L9IrAgRotji1yGjQG0LjC96jfJIxfwCMCN8rNlVitIrIQZNJITrarqw7PBXuTwFCyNBvoQ'
+DEFAULT_FROM_EMAIL = 'nanchiivan65@gmail.com'
+>>>>>>> c30bdadf5507b66cdb49b7bca5ddf2553c8b0e49

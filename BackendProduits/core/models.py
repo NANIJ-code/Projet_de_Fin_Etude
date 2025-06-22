@@ -36,6 +36,8 @@ class Produit(models.Model):
     quantite = models.PositiveIntegerField(default=1)
     date_enregistrement = models.DateField(auto_now_add=True)
     date_expiration = models.DateField()
+    position = models.CharField(max_length=255, default="") # A gerer dans le serializer
+    description = models.CharField(max_length=255, default="")
     is_active = models.BooleanField(default=True)
     # 
     def __str__(self):
@@ -50,22 +52,20 @@ class Produit(models.Model):
             Q(uuid_produit__icontains=mot_cle)
         )
     
-    def consulterProduit(self):
-        return {
-            "nom": self.nom,
-            "prix": self.prix,
-            "quantite": self.quantite,
-            "fournisseur": self.fournisseur,
-            "date_expiration": self.date_expiration,
-    }
-    
-    def modifierProduit(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
-    def supprimerProduit(self):
-        self.delete()
+   
+       
+    # def consulterProduit(self):
+    #     return {
+    #         "nom": self.nom,
+    #         "fournisseur": self.fournisseur,
+    #         "prix": self.prix,
+    #         "quantite": self.quantite,
+    #         "date_enregistrement": self.date_enregistrement,
+    #         "date_expiration": self.date_expiration,
+    #         "is_active": self.is_active,
+    # }
+    
 
    
 
@@ -117,14 +117,24 @@ def generate_qr_code(sender, instance, created, **kwargs):
 
 
 class Alerte(models.Model):
-    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE, null=True, blank=True)
     message = models.TextField()
     date_alerte = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Alerte pour {self.produit.nom} - {self.message}"
-    
+        if self.produit:
+            return f"Alerte pour {self.produit.nom} - {self.message}"
+        return f"Alerte - {self.message}"
 class Transaction(models.Model):
+    """
+        Modèle pour enregistrer les transactions de produits.
+        Nous avons deux types de transaction:
+        - Transaction B2B: Business To Business, transaction entre 
+            deux acteurs de la chaine de distribution
+            (par exemple, un fournisseur et un distributeur).
+        - Transaction B2C: Business To Customer, transaction entre 
+            un acteur de la chaine de distribution et le client final.
+    """
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     emetteur = models.CharField(max_length=255)
     destinataire = models.CharField(max_length=255)
@@ -133,8 +143,25 @@ class Transaction(models.Model):
         ('B2B', 'Transaction B2B'),
         ('B2C', 'Transaction B2C'),
     ]
-    type_transaction = models.CharField(max_length=50, choices=TYPE_CHOICES)  # 'ajout' ou 'retrait'
-    quantite = models.PositiveIntegerField()
+    type_transaction = models.CharField(max_length=50, choices=TYPE_CHOICES) 
 
     def __str__(self):
-        return f"{self.type_transaction} de {self.quantite} unités de {self.produit.nom} le {self.date_transaction}"
+        return f"Transaction éffectuée avec Succès"
+    
+
+class ligne_transaction(models.Model):
+    """
+        Modèle pour enregistrer les lignes de transaction.
+        Chaque ligne de transaction est liée à une transaction spécifique
+        et contient des informations sur le produit, la quantité et le prix unitaire.
+    """
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name='lignes')
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    quantite = models.PositiveIntegerField()
+   
+    def  __str__(self):
+        return (
+            f"Transaction {self.transaction.type_transaction} de {self.quantite} unités de "
+            f"{self.produit.nom} de {self.transaction.emetteur} vers {self.transaction.destinataire} "
+            f"le {self.transaction.date_transaction}"
+        )
