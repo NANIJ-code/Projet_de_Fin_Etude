@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from users.views import UtilisateurViewSet, CompteViewSet
+from users.views import UtilisateurViewSet
 from users.views import CustomLoginView
 from users.views import OTPRequestView,  PasswordResetView
 
@@ -8,9 +8,7 @@ from users.views import OTPRequestView,  PasswordResetView
 
 router = DefaultRouter()
 # Création d'un routeur pour enregistrer les ViewSets
-router.register(r'comptes', CompteViewSet, basename='compte')
 router.register(r'utilisateurs', UtilisateurViewSet, basename='utilisateur')
-# router.register(r'comptes', CompteViewSet, basename='compte')
 
 
 urlpatterns = [

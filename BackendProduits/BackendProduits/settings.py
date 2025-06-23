@@ -142,7 +142,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # modèle utilisateur personnalisé
-AUTH_USER_MODEL = 'users.Compte'
+AUTH_USER_MODEL = 'users.Utilisateur'
 
 FRONTEND_LOGIN_URL = "https://monappflutter.com/"  # ou l'URL de ton frontend
 SIMPLE_JWT = {

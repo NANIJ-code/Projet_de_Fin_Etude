@@ -1,114 +1,217 @@
 from rest_framework import serializers
-from .models import Produit, QRcode, Utilisateur, Alerte, Transaction
+from django.conf import settings
+from .models import *
 from datetime import date
 
 class ProduitSerializer(serializers.ModelSerializer):
-    qr_code_url = serializers.SerializerMethodField()
+    """
+    Sérialiseur pour enregistrer un nouveau produit dans la base de donnees.
+    Le fournisseur est assigné dynamiquement à partir de l’utilisateur connecté.
+    """
+
+    fournisseur = serializers.SerializerMethodField()
+
     class Meta:
         model = Produit
-        fields = ['id', 'nom', 'prix', 'quantite', 'date_expiration', 'qr_code_url']
+        fields = ['id', 'nom', 'fournisseur', 'prix', 'description']
 
+    def get_fournisseur(self, obj):
+        """
+        Retourne le nom du fournisseur associé au produit.
+        """
+        return obj.fournisseur.username 
     
     def create(self, validated_data):
-        # surcharge la méthode create pour ajouter une logique personnalisée
-        # pour assigner le fournisseur automatiquement
-        #  a un produit lors de son enregistrement
-        fournisseur = Utilisateur.objects.get(role='fournisseur')
-        validated_data['fournisseur'] = fournisseur
-        validated_data['position'] = fournisseur.nom
-        return super().create(validated_data)
+        utilisateur = self.context['request'].user 
+        # 
+        if utilisateur.role != 'fournisseur':
+            raise serializers.ValidationError("Seuls les fournisseurs peuvent enregistrer un produit.")
+        if Produit.objects.filter(nom=validated_data['nom'], fournisseur=utilisateur).exists():
+            raise serializers.ValidationError(f"Le produit {validated_data['nom']}  a déjà été enregistré") 
+        validated_data['fournisseur'] = utilisateur
+        return super().create(validated_data)  
+
+class LotProduitSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour creer un lot de produit  avec vérification de la date d'expiration.
+    Le champ 'numero_lot' est généré automatiquement.
+    Le champ 'produit' est un champ de lecture seule qui retourne le nom du produit associé.
+    """
+
+    # produit = ProduitSerializer()
+    produit_nom = serializers.CharField(source='produit.nom', read_only=True)
+    qr_code = serializers.SerializerMethodField()
+    class Meta:
+        model = LotProduit
+        fields = ['numero_lot', 'produit','produit_nom', 'quantite', 'date_enregistrement','date_expiration','qr_code']
+        # extra_kwargs = {
+        #     'numero_lot': {'read_only': True},
+        #     'qr_code': {'read_only': True}
+        #     }
+
+    
+    
+    def get_qr_code(self, obj):
+        """
+         Fonction permettant de retourner l'url du code qr associe au produit
+        """
+        if obj.qr_code:
+            request = self.context.get('request')
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.qr_code.url) if request else obj.qr_code.url
+        return None
     
     def validate_date_expiration(self, value):
         if value < date.today():
-            raise serializers.ValidationError("La date de péremption ne peut pas être dans le passé.")
-        return value
-    def get_qr_code_url(self, obj):
-        if hasattr(obj, 'qrcodes') and obj.qrcodes:
-            request = self.context.get('request')
-            url = obj.qrcodes.image.url
-
-            if request is not None:
-                # Assure que l'URL est absolue
-                return request.build_absolute_uri(url)
-            # Assure que l'objet a un attribut 'qrcodes' et qu'il n'est pas vide
-            return request.build_absolute_uri(url)
-        return None
-class ProduitDetailSerializer(serializers.ModelSerializer):
+            raise serializers.ValidationError("La date d'expiration ne peut pas être dans le passé.")
+        return value    
+        
+class UniteProduitSerializer(serializers.ModelSerializer):
     qr_code_url = serializers.SerializerMethodField()
+    lot = serializers.SerializerMethodField()
+
     class Meta:
-        model = Produit
+        model = UniteProduit
         fields = [
-            'id', 
-            'nom', 
-            'fournisseur', 
-            'prix', 
-            'quantite', 
-            'date_enregistrement', 
-            'date_expiration', 
+            'id',
+            'lot', 
             'position', 
-            'description', 
             'qr_code_url'
         ]
     
+    def get_lot(self, obj):
+        """
+        Fonction permettant de retourner le nom du produit associé à l'unité de produit.
+        """
+        return {
+            'nom': obj.lot.produit.nom,
+            'numero_lot':obj.lot.numero_lot,
+            'prix': obj.lot.produit.prix,
+            'date_expiration': obj.lot.date_expiration,
+            'description': obj.lot.produit.description,
+            
+        }
+    
     def get_qr_code_url(self, obj):
-        if hasattr(obj, 'qrcodes') and obj.qrcodes:
+        """
+         Fonction permettant de retourner l'url du code qr associe au produit
+        """
+        if obj.qr_code:
             request = self.context.get('request')
-            url = obj.qrcodes.image.url
-
-            if request is not None:
-                # Assure que l'URL est absolue
-                return request.build_absolute_uri(url)
-            # Assure que l'objet a un attribut 'qrcodes' et qu'il n'est pas vide
-            return request.build_absolute_uri(url)
+            return request.build_absolute_uri(obj.qr_code.image.url) if request else obj.qr_code.image.url
         return None
     
     
 class QRcodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = QRcode
-        fields = ['id', 'produit', 'image']
+        fields = [ 'unite_produit', 'image']
 
-class TransactionSerializer(serializers.Serializer):
-    """
-    Serializer pour les traces de produits.
-    """
+
+class LigneTransactionSerializer(serializers.ModelSerializer):
+    
+    lots = serializers.PrimaryKeyRelatedField(queryset=LotProduit.objects.all(), many=True)
+    quantite_totale = serializers.IntegerField(read_only=True)
     class Meta:
-        model = Transaction
-        fields = '__all__'
+        model = ligne_transaction
+        fields = ['produit', 'lots','quantite_totale']
 
+    
+    def get_quantite_totale(self, obj):
+        # Affiche la quantité totale des unités de produit dans la ligne de transaction
+        return obj.quantite_totale
     def create(self, validated_data):
-        transaction = super().create(validated_data)
-        produit = transaction.produit
+        lots_data = validated_data.pop('lots')
+        instance = super().create(validated_data)
+        instance.lots.set(lots_data)
+        return instance
+class TransactionSerializer(serializers.ModelSerializer):
+    lignes = LigneTransactionSerializer(many=True, write_only=True)
+    emetteur = serializers.SerializerMethodField(read_only=True)
+    destinataire = serializers.PrimaryKeyRelatedField(queryset=Utilisateur.objects.all(), write_only=True)
 
-        if transaction.type_transaction == 'B2B':
-            produit.position = "En cours de transaction"
-        elif transaction.type_transaction == 'B2C':
-            produit.position = "Vendu"
-            produit.is_active = False
-
-        produit.save()
-        return transaction
-
-class ligneTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ['id', 'transaction', 'produit', 'quantite']
+        fields = ['id', 'emetteur','destinataire', 'type_transaction', 'lignes']
+
+    def get_emetteur(self, obj):
+        return {
+            "username": obj.emetteur.username,
+            "ville": obj.emetteur.ville,
+        }
+
+    def get_destinataire(self, obj):
+        return {
+            "username": obj.destinataire.username,
+        }
     
     def create(self, validated_data):
-        ligne_transaction = super().create(validated_data)
-        produit = ligne_transaction.produit
-        produit.quantite -= ligne_transaction.quantite  # Met à jour la quantité du produit
-        produit.save()
-        return ligne_transaction
+        utilisateur = self.context['request'].user 
+        lignes_data = validated_data.pop('lignes')
+        destinataire = validated_data.pop('destinataire')
+        transaction = Transaction.objects.create(
+            emetteur = utilisateur, 
+            destinataire=destinataire,
+            **validated_data)
+        for ligne_data in lignes_data:
+            lots = ligne_data['lots']
+            produit = ligne_data['produit']
+            quantite = sum(lot.quantite for lot in lots)
+            ligne = ligne_transaction.objects.create(
+                transaction=transaction,
+                produit=produit,
+                quantite_totale=quantite
+        )
+        ligne.lots.set(lots)
 
+        for lot in lots:
+            unites = UniteProduit.objects.filter(lot=lot, is_active=True)[:quantite]
+            for unite in unites:
+                if transaction.type_transaction == 'B2B':
+                    unite.position = "En cours de transaction"
+                elif transaction.type_transaction == 'B2C':
+                    unite.position = "Vendu"
+                    unite.is_active = False
+                unite.save()
+
+        return transaction    
+
+
+   
 class AlerteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alerte
-        fields = ['id', 'produit', 'message', 'date_alerte']
+        fields = ['id', 'lot', 'unite', 'message', 'date_alerte']
     
     def create(self, validated_data):
-        alerte = super().create(validated_data)
-        produit = alerte.produit
-        produit.is_active = False  # Désactive le produit en cas d'alerte
-        produit.save()
+
+        emetteur = self.context['emetteur']
+        destinataire = self.context['destinataire']
+        unite = validated_data['unite']
+        lot = validated_data['lot']
+        message = validated_data['message']
+
+        alerte = Alerte.objects.create(
+            lot=lot,
+            unite=unite,
+            emetteur=emetteur,
+            destinataire=destinataire,
+            message=message
+        )
+
+        
+        # Envoi du mail
+        if destinataire and destinataire.email:
+            from django.core.mail import send_mail
+            send_mail(
+                subject="Alerte sur un produit",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[destinataire.email],
+                fail_silently=False,
+            )
+        for unite in lot.unites.all():
+            # Désactive le produit en cas d'alerte
+            unite.is_active = False
+            unite.save()  
         return alerte

@@ -6,46 +6,27 @@ from django.utils import timezone
 from datetime import timedelta
 
 
-
-
-class Compte(AbstractUser):
-    """
-    Modèle utilisateur principal héritant de AbstractUser.
-    Représente un compte de connexion à la plateforme PharmaTrack.
-    Les champs standards Django sont utilisés (username, email, password, etc.).
-    """
-
-    def __str__(self):
-        """
-        Retourne le nom de l'utilisateur pour l'affichage.
-        """
-        return self.username
-    
-    def set_password(self, raw_password):
-        # Utilise un hash sécurisé en pratique
-        self.password = make_password(raw_password)
-        self.save()
-
-
     
 # dans la classe 'Utilisateur' nous initions le role de chaque utilisateurs
 # le champ 'role' pour indiquer le rôle de l'utilisateur
 # le champ 'compte' est une relation OneToOne avec la classe Compte
 
-class Utilisateur(models.Model):
+class Utilisateur(AbstractUser):
     """
     Modèle représentant les informations personnelles et le rôle d'un utilisateur.
-    Lié en OneToOne à un Compte.
-    Champs : nom, téléphone, pays, ville, adresse, rôle (fournisseur, distributeur, gérant).
+    Hérite de AbstractUser pour inclure les champs de base tels que username, password, email, etc.
+    Champs supplémentaires : parent, téléphone, pays, ville, adresse, rôle (fournisseur, distributeur, gérant).
+    - le champ 'parent' permet de garder une trace sur qui a cree qui, cela permettra de filtrer les destinateurs
+       d'une transaction en fonction de l'utilisateur connecté.
     """
 
     role_user = [
         ('fournisseur', 'Fournisseur'),
         ('distributeur', 'Distributeur'),
         ('gerant', 'Gerant_Pharmacie'),
+        ('client', 'consomateur'),
     ]
-    compte = models.OneToOneField(Compte, on_delete=models.CASCADE, related_name='user')
-    nom = models.CharField(max_length=100)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='filleuls')
     telephone = models.CharField(max_length=20)
     pays = models.CharField(max_length=100)
     ville = models.CharField(max_length=100)
@@ -54,9 +35,25 @@ class Utilisateur(models.Model):
 
 
     def __str__(self):
-        return self.nom
+        return self.username
 
+    def set_password(self, raw_password):
+        # Utilise un hash sécurisé en pratique
+        self.password = make_password(raw_password)
+        self.save()
 
+    def is_profile_complete(self):
+        """
+        Vérifie si le profil de l'utilisateur est complet.
+        Un profil est considéré complet s'il a un téléphone, un pays, une ville et une adresse.
+        """
+        return all([
+            self.first_name,
+            self.telephone,
+            self.pays,
+            self.ville,
+            self.adresse
+        ])
 
 class OTP(models.Model):
 
@@ -65,7 +62,7 @@ class OTP(models.Model):
     Champs : compte lié, code OTP, date de création, statut d'utilisation.
     """
      
-    compte = models.ForeignKey('Compte', on_delete=models.CASCADE)
+    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE)
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)
