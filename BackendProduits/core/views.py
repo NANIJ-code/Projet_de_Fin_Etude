@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from core.models import Produit, QRcode, Alerte, Transaction
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import permissions
 from core.serializers import *
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -21,6 +22,8 @@ from django.http import FileResponse, Http404
 from rest_framework.exceptions import NotFound
 from rest_framework import status
 from core.permission import IsFournisseurPermission
+import uuid as uuid_lib
+
 
 class ProduitViewSet(viewsets.ModelViewSet):
     """
@@ -70,7 +73,8 @@ class LotProduitViewSet(viewsets.ModelViewSet):
 class UniteProduitViewSet(viewsets.ModelViewSet):
     queryset = UniteProduit.objects.all()
     serializer_class = UniteProduitSerializer
-    # permission_classes =  [permissions.IsAuthenticated]
+    permission_classes =  [permissions.IsAuthenticated]
+    
     # def get_serializer_class(self):
     #     if self.action in ['retrieve', 'scan']:
     #         return UniteProduitSerializer
@@ -134,6 +138,12 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
                     "Il ne peut pas être scanné à nouveau.\n"
                     "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support."
                 )
+            else:
+                produit_vendu = (
+                    "Attention Produit suspect !\n\n"
+                    "Ce produit n'est plus actif dans la chaine et ne peut faire l'objet d'operation.\n"
+                    "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support."
+                )
             return Response({produit_vendu})
         serializer = self.get_serializer(unite, context={'request': request})
         data = serializer.data
@@ -158,34 +168,65 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
         """
 
         uuid = request.query_params.get('uuid')
-        uuid_requis = f"UUID du produit requis pour lancer une alerte!"
-        unite_pas_trouve = f"Unité non trouvée pour l'UUID fourni!"
-        if not uuid:
-            return Response({uuid_requis}, status=400)
-        try:
-            unite = UniteProduit.objects.get(uuid_produit=uuid)
-        except UniteProduit.DoesNotExist:
-            return Response({unite_pas_trouve}, status=404)
-        
+        code_scanned = request.data.get('code_scanned')
         message = request.data.get('message')
         utilisateur = request.user
-        destinataire = utilisateur.parent  # ou autre logique selon ton modèle
+        destinataire = utilisateur.parent
+        # uuid_requis = f"UUID du produit requis pour lancer une alerte!"
+        # unite_pas_trouve = f"Unité non trouvée pour l'UUID fourni!"
 
-        serializer = AlerteSerializer(
-            data={
-                "lot": unite.lot.pk,
-                "unite": unite.pk,
-                "message": message,
-            },
-            context={
-                "request": request,
-                "emetteur": utilisateur,
-                "destinataire": destinataire,
-            }
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": "Alerte envoyée avec succès."})
+        if uuid:
+            try:
+                uuid_obj = uuid_lib.UUID(uuid)
+                unite = UniteProduit.objects.get(uuid_produit=uuid_obj)
+            except (ValueError, UniteProduit.DoesNotExist):
+                # UUID invalide OU unité non trouvée => produit inconnu
+                serializer = AlerteInconnueSerializer(
+                    data={
+                        "code_scanned": uuid,
+                        "message": message or "QR code inconnu scanné."
+                    },
+                    context={
+                        "request": request,
+                        "emetteur": utilisateur,
+                        "destinataire": destinataire,
+                    }
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response({"detail": "Alerte envoyée pour produit inconnu."})
+            # Produit trouvé, cas normal
+            serializer = AlerteSerializer(
+                data={
+                    "lot": unite.lot.pk,
+                    "unite": unite.pk,
+                    "message": message,
+                },
+                context={
+                    "request": request,
+                    "emetteur": utilisateur,
+                    "destinataire": destinataire,
+                }
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"detail": "Alerte envoyée avec succès."})
+        else:
+            # Cas 2 : Produit inconnu (pas d'UUID fourni)
+            serializer = AlerteInconnueSerializer(
+                data={
+                    "code_scanned": code_scanned or "QR inconnu",
+                    "message": message or "QR code inconnu scanné."
+                },
+                context={
+                    "request": request,
+                    "emetteur": utilisateur,
+                    "destinataire": destinataire,
+                }
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"detail": "Alerte envoyée pour produit inconnu."})
 
     
 
@@ -213,28 +254,32 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
         except UniteProduit.DoesNotExist:
             return Response({"detail": "Unité non trouvée."}, status=404)
         
-        lot = LotProduit.objects.get(numero_lot = unite_trouve.lot.numero_lot)
+        lot =  unite_trouve.lot
         utilisateur = request.user 
-        print(utilisateur.username)
         unites = UniteProduit.objects.filter(lot = lot)
         updated = 0
         lignes  = ligne_transaction.objects.filter(lots=lot).order_by('-transaction__date_creation').first()
+        if not lignes:
+            transaction_none = "Aucune transaction trouvée pour ce lot."    
+            return Response({transaction_none }, status=404)
         transaction = lignes.transaction
-        print(transaction.destinataire)
-        if unite_trouve.position != "En cours de transaction":
-            return Response({"detail": "La position ne peut être mise à jour que si l'unité est en cours de transaction."}, status=400)
 
         if transaction.destinataire.username != utilisateur.username:
-            return Response({"detail": "Ces Produits ne vous sont pas destinés. Alertez Votre Superieur"}, status=400)
-        
-        for unite in unites:
-            unite.position = utilisateur.username
-            unite.save()
-            updated += 1
+            destinataire_errone = "Ces Produits ne vous sont pas destinés. Alertez Votre Superieur"
+            return Response({ destinataire_errone}, status=400)
+            
+      
+        if unite_trouve.position != "En cours de transaction":
+            position_errone = "La position ne peut être mise à jour que si l'unité est en cours de transaction."
+            return Response({position_errone}, status=400)
+        else :
+            for unite in unites:
+                unite.position = utilisateur.username
+                unite.save()
+                updated += 1
 
-        return Response({
-            "detail": f"Position mise à jour pour {updated} unité(s) du lot {lot.numero_lot}."
-        })
+            message = f"Position mise à jour pour {updated} unité(s) du lot {lot.numero_lot}."
+            return Response({message}, status=200)
 
 
     @action(detail=False, methods=['get'], url_path='historique')

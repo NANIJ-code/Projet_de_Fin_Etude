@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Alerte Produit Inconnu - MediScan</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f9ff; margin: 0; padding: 0; color: #333; }
+    .container { max-width: 650px; margin: 30px auto; background-color: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.07);}
+    .header { background-color: #c62828; color: white; text-align: center; padding: 20px 30px;}
+    .header h1 { margin: 0; font-size: 22px;}
+    .content { padding: 30px;}
+    .alert-box { background-color: #ffebee; padding: 15px 20px; border-left: 5px solid #c62828; margin-bottom: 20px;}
+    .section h2 { font-size: 17px; color: #b71c1c; margin-bottom: 10px;}
+    .section p, .section li { font-size: 15px; line-height: 1.6;}
+    .footer { background-color: #ffebee; text-align: center; color: #666; font-size: 13px; padding: 15px;}
+    .btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #c62828; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚨 Alerte : Produit Inconnu</h1>
+    </div>
+    <div class="content">
+      <div class="alert-box">
+        ⚠ <strong>{{ alerte_message|linebreaksbr }}</strong>
+      </div>
+      <div class="section">
+        <h2>🧾 Détails du scan</h2>
+        <ul>
+          <li><strong>Code scanné :</strong> {{ code_scanned }}</li>
+          <li><strong>Date :</strong> {{ date_scan }}</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>📨 Informations de l'émetteur</h2>
+        <p><strong>Nom :</strong> {{ emetteur_nom }}</p>
+        <p><strong>Email :</strong> <a href="mailto:{{ emetteur_email }}">{{ emetteur_email }}</a></p>
+      </div>
+      <div class="section">
+        <p>🔎 Connectez-vous à MediScan pour examiner cette alerte et prendre les mesures appropriées.</p>
+        <a href="https://mediscan.app/alertes" class="btn">Voir dans MediScan</a>
+      </div>
+    </div>
+    <div class="footer">
+      MediScan &copy; 2025 – Plateforme de traçabilité pharmaceutique.
+    </div>
+  </div>
+</body>
+</html>

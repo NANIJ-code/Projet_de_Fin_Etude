@@ -3,6 +3,8 @@ from rest_framework import serializers
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 
 class UtilisateurinitialSerializer(serializers.ModelSerializer):
@@ -38,10 +40,14 @@ class UtilisateurinitialSerializer(serializers.ModelSerializer):
         if utilisateur.role == 'distributeur' and value != 'gerant':
             raise serializers.ValidationError("Un distributeur ne peut creer que des gerants")
         return value
+    
+
     def validate_username(self, value):
         if not value or value.strip() == "":
             raise serializers.ValidationError("Le nom d'utilisateur ne peut pas être vide.")
         return value
+    
+
     def create(self, validated_data):
         """
             Crée un utilisateur avec un compte associé.
@@ -62,23 +68,40 @@ class UtilisateurinitialSerializer(serializers.ModelSerializer):
         access_token = str(refresh.access_token)
         # Envoi de l'email après création
         login_url = "https://monappflutter.com/auto-login?token={access_token}"  # À adapter selon ton frontend
-        message = (
-            f"Bienvenue sur notre plateforme **MediScan** !\n\n"
-            f"Voici vos identifiants de connexion :\n"
-            f"Nom d'utilisateur : {utilisateur.username}\n"
-            f"Email : {utilisateur.email}\n"
-            f"Mot de passe : {validated_data['password']}\n\n"
-            f" !!!!! Veuillez vous connectez et mettez à jour vos informations avant toute activité !!!!!\n\n"
-            # En production, il vaut mieux éviter cela et préférer un lien d’activation ou de réinitialisation.
-            f"Connectez-vous ici : {login_url}"
-        )
-        send_mail(
-            subject="Création de votre compte",
-            message=message,
+        # message = (
+        #     f"Bienvenue sur notre plateforme **MediScan** !\n\n"
+        #     f"Voici vos identifiants de connexion :\n"
+        #     f"Nom d'utilisateur : {utilisateur.username}\n"
+        #     f"Email : {utilisateur.email}\n"
+        #     f"Mot de passe : {validated_data['password']}\n\n"
+        #     f" !!!!! Veuillez vous connectez et mettez à jour vos informations avant toute activité !!!!!\n\n"
+        #     # En production, il vaut mieux éviter cela et préférer un lien d’activation ou de réinitialisation.
+        #     f"Connectez-vous ici : {login_url}"
+        # )
+
+        # send_mail(
+        #     subject="Création de votre compte",
+        #     message=message,
+        #     from_email=settings.DEFAULT_FROM_EMAIL,
+        #     recipient_list=[utilisateur.email],
+        #     fail_silently=True,
+        # )
+
+        html_content = render_to_string('emails/creation_compte.html', {
+            'username': utilisateur.username,
+            'email': utilisateur.email,
+            'password': validated_data['password'],
+            'login_url': login_url,
+        })
+        email = EmailMultiAlternatives(
+            subject="Création de votre compte MediScan",
+            body=".",  # texte fallback
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[utilisateur.email],
-            fail_silently=True,
+            to=[utilisateur.email],
         )
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+
         return utilisateur
 
 

@@ -13,7 +13,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.core.mail import send_mail
 from django.conf import settings
-
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 
 #########################################################
@@ -119,13 +120,25 @@ class OTPRequestView(APIView):
             return Response({"detail": "Aucun utilisateur avec cet email."}, status=404)
         code = f"{random.randint(100000, 999999)}"
         OTP.objects.create(utilisateur=utilisateur, code=code)
-        send_mail(
-            subject="Votre code OTP PharmaTrack",
-            message=f"Votre code OTP est : {code}\nIl expire dans 10 minutes.",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=False,
+        # send_mail(
+        #     subject="Votre code OTP PharmaTrack",
+        #     message=f"Votre code OTP est : {code}\nIl expire dans 10 minutes.",
+        #     from_email=settings.DEFAULT_FROM_EMAIL,
+        #     recipient_list=[email],
+        #     fail_silently=False,
+        # )
+        html_content = render_to_string('emails/otp_email.html', {
+            'otp_code': code,
+        })
+        email = EmailMultiAlternatives(
+            subject = "Votre code OTP MediScan",
+            body = f"Votre code OTP est : {code}\nIl expire dans 10 minutes.",
+            from_email = settings.DEFAULT_FROM_EMAIL,
+            to = [email],
         )
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+
         return Response({'detail': 'OTP envoyé à votre email.'})
 
 

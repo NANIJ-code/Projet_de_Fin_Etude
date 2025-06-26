@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouvelle Transaction - MediScan</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f9ff; margin: 0; padding: 0; color: #333; }
+    .container { max-width: 650px; margin: 30px auto; background-color: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.07);}
+    .header { background-color: #1565c0; color: white; text-align: center; padding: 20px 30px;}
+    .header h1 { margin: 0; font-size: 22px;}
+    .content { padding: 30px;}
+    .section h2 { font-size: 17px; color: #0d47a1; margin-bottom: 10px;}
+    .section p, .section li { font-size: 15px; line-height: 1.6;}
+    .footer { background-color: #e3f2fd; text-align: center; color: #666; font-size: 13px; padding: 15px;}
+    .btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #0d47a1; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔔 Nouvelle transaction enregistrée</h1>
+    </div>
+    <div class="content">
+      <div class="section">
+        <p>Bonjour <strong>{{ destinataire_nom }}</strong>,</p>
+        <p>Une nouvelle transaction a été enregistrée par <strong>{{ emetteur_nom }}</strong>.</p>
+        <ul>
+          <li><strong>Type de transaction :</strong> {{ type_transaction }}</li>
+        </ul>
+        <h2>Détails des lignes de transaction :</h2>
+        <ul>
+          {% for ligne in lignes %}
+            <li>
+              <strong>Produit :</strong> {{ ligne.produit_nom }}<br>
+              <strong>Lots :</strong> {{ ligne.lots_str }}<br>
+              <strong>Quantité :</strong> {{ ligne.quantite }}
+            </li>
+          {% endfor %}
+        </ul>
+        <p>Pour plus d'informations, veuillez contacter l'émetteur de la transaction : {{ emetteur_nom }} ({{ emetteur_email }})</p>
+      </div>
+      <div class="section">
+        <a href="https://mediscan.app/transactions" class="btn">Voir la transaction</a>
+      </div>
+    </div>
+    <div class="footer">
+      MediScan &copy; 2025 – Plateforme de traçabilité pharmaceutique.
+    </div>
+  </div>
+</body>
+</html>
