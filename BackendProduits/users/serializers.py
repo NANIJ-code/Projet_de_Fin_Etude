@@ -46,7 +46,7 @@ class UtilisateurinitialSerializer(serializers.ModelSerializer):
         """
             Crée un utilisateur avec un compte associé.
         """
-        print("validated_data:", validated_data)
+        
         if 'role' not in validated_data or not validated_data['role']:
             raise serializers.ValidationError({"role": "Ce champ est obligatoire."})
     
@@ -63,7 +63,7 @@ class UtilisateurinitialSerializer(serializers.ModelSerializer):
         # Envoi de l'email après création
         login_url = "https://monappflutter.com/auto-login?token={access_token}"  # À adapter selon ton frontend
         message = (
-            f"Bienvenue sur notre plateforme **PharmaTrack** !\n\n"
+            f"Bienvenue sur notre plateforme **MediScan** !\n\n"
             f"Voici vos identifiants de connexion :\n"
             f"Nom d'utilisateur : {utilisateur.username}\n"
             f"Email : {utilisateur.email}\n"
@@ -77,7 +77,7 @@ class UtilisateurinitialSerializer(serializers.ModelSerializer):
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[utilisateur.email],
-            fail_silently=False,
+            fail_silently=True,
         )
         return utilisateur
 

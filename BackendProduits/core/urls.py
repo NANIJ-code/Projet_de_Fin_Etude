@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from core.views import *
-# from .views import ExportQRCodesPDF
+from .views import ExportQRCodesPDF
 from core.views import QRcodeViewSet
 
 router = DefaultRouter()
@@ -17,6 +17,7 @@ router.register(r'alertes', AlerteViewSet)
 
 
 urlpatterns = [
-    # path('export/', ExportQRCodesPDF.as_view(), name='export_qr_codes'),
     path('', include(router.urls)),
+    path('export_qr_pdf/<str:numero_lot>/', ExportQRCodesPDF.as_view(), name='export_qr_pdf'),
+
 ]

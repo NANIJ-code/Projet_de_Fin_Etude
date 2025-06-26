@@ -16,6 +16,8 @@ from core.serializers import *
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
+from io import BytesIO
+from django.http import FileResponse, Http404
 from rest_framework.exceptions import NotFound
 from rest_framework import status
 from core.permission import IsFournisseurPermission
@@ -59,7 +61,8 @@ class LotProduitViewSet(viewsets.ModelViewSet):
         mot_cle = request.query_params.get('mot_cle')
         lot = LotProduit.rechercherLot(mot_cle)
         if not lot.exists():
-            return Response({"message": "Desole Produit inexistant!"})
+            message = "Desole Lot inexistant!"
+            return Response({message})
         serializer = self.get_serializer(lot, many=True,context={'request': request})
         return Response(serializer.data)
 
@@ -83,20 +86,31 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='scanner')
     def scan(self, request):
-        """"
-            lecture du Scanne d'un produit en utilisant le code QR.
         """
+        ----------------------------------------------------------------------
+        Lecture du QR code d'une unité de produit.
+        Retourne les détails de l'unité si elle existe et est valide.
+        Fournit l'UUID pour permettre d'autres actions (alerte, maj-position, historique).
+        ----------------------------------------------------------------------
+        Paramètres :
+            - code (query param) : UUID du QR code scanné.
+        Retour :
+            - Détails de l'unité ou message d'erreur.
+        ----------------------------------------------------------------------
+        """
+
         produit_errone = ("Attention Produit Suspect ! \n\n Ce produit n'est pas reconnu, "
                 "cela peut être dû à une erreur lors du scan. "
                 "Assurez vous que le QR code soit bien en face du lecteur. "
                 "Si le problème persiste lancez une alerte.")
         
-        produit_vendu = ("Attention Produit déjà vendu ! \n\n Ce produit a déjà été vendu par. "
-                "Il ne peut pas être scanné à nouveau. "
-                "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support.")
+        # produit_vendu = ("Attention Produit déjà vendu ! \n\n Ce produit a déjà été vendu par. "
+        #         "Il ne peut pas être scanné à nouveau. "
+        #         "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support.")
+        qr_manquant = f"Code QR manquant"
         code = request.query_params.get('code')
         if not code:
-            return Response({"message": "Code QR manquant"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({qr_manquant}, status=status.HTTP_400_BAD_REQUEST)
         
         unite = UniteProduit.rechercher(code)
         if not unite:
@@ -111,22 +125,48 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
             )
             if derniere_b2c:
                 emetteur = derniere_b2c.transaction.emetteur
+                ville = derniere_b2c.transaction.emetteur.ville
                 nom = emetteur
-                ville = getattr(derniere_b2c.transaction.emetteur.ville, 'ville', 'Ville inconnue')
                 date = derniere_b2c.transaction.date_creation.strftime('%d-%m-%Y %H:%M')
                 produit_vendu = (
                     f"Attention Produit déjà vendu !\n\n"
-                    f"Ce produit a été vendu par {nom} à {ville} le {date}.\n"
+                    f"Ce produit a été vendu par **{nom}** à **{ville}** le **{date}**.\n"
                     "Il ne peut pas être scanné à nouveau.\n"
                     "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support."
                 )
             return Response({produit_vendu})
         serializer = self.get_serializer(unite, context={'request': request})
-        return Response(serializer.data)
+        data = serializer.data
+        data['uuid_produit'] = str(unite.uuid_produit)
+        # Ici on fournit en sortie du scan l'uuid du produit qui sera recupere coté frontend et servira de paramètre 
+        # pour les actions suivantes (alerte, mise à jour de position, historique.)
+        return Response(data)
     
-    @action(detail=True, methods=['post'], url_path='alerte')
+    @action(detail=False, methods=['post'], url_path='alerte')
     def lancer_alerte(self, request, pk=None):
-        unite = self.get_object()
+        """
+        ----------------------------------------------------------------------
+        Permet à un utilisateur de lancer une alerte sur une unité de produit.
+        L'alerte est liée à l'unité et à son lot, et notifie le supérieur hiérarchique.
+        ----------------------------------------------------------------------
+        Paramètres :
+            - uuid (query param) : UUID de l'unité concernée.
+            - message (body) : Message d'alerte.
+        Retour :
+            - Message de succès ou d'erreur.
+        ----------------------------------------------------------------------
+        """
+
+        uuid = request.query_params.get('uuid')
+        uuid_requis = f"UUID du produit requis pour lancer une alerte!"
+        unite_pas_trouve = f"Unité non trouvée pour l'UUID fourni!"
+        if not uuid:
+            return Response({uuid_requis}, status=400)
+        try:
+            unite = UniteProduit.objects.get(uuid_produit=uuid)
+        except UniteProduit.DoesNotExist:
+            return Response({unite_pas_trouve}, status=404)
+        
         message = request.data.get('message')
         utilisateur = request.user
         destinataire = utilisateur.parent  # ou autre logique selon ton modèle
@@ -147,111 +187,132 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response({"detail": "Alerte envoyée avec succès."})
 
-    @action(detail=True, methods=['get'], url_path='historique')
-    def historique(self, request, pk=None):
+    
+
+    @action(detail=False, methods=['post'], url_path='maj-position')
+    def maj_position(self, request, pk=None):
         """
-        Affiche l'historique des transactions d'une unité (du plus récent au plus ancien).
+        ----------------------------------------------------------------------
+        Met à jour la position de toutes les unités d'un lot après scan d'une unité.
+        Vérifie que l'unité est en cours de transaction et que l'utilisateur est bien le destinataire.
+        ----------------------------------------------------------------------
+        Paramètres :
+            - uuid (query param) : UUID de l'unité scannée.
+        Retour :
+            - Message de succès avec le nombre d'unités mises à jour, ou message d'erreur.
+        ----------------------------------------------------------------------
         """
+
+        uuid = request.query_params.get('uuid')
+
+        if not uuid:
+            return Response({"detail": "UUID requis."}, status=400)
         try:
-            unite = self.get_object()
+            unite_trouve = UniteProduit.objects.get(uuid_produit=uuid)
+            
         except UniteProduit.DoesNotExist:
             return Response({"detail": "Unité non trouvée."}, status=404)
+        
+        lot = LotProduit.objects.get(numero_lot = unite_trouve.lot.numero_lot)
+        utilisateur = request.user 
+        print(utilisateur.username)
+        unites = UniteProduit.objects.filter(lot = lot)
+        updated = 0
+        lignes  = ligne_transaction.objects.filter(lots=lot).order_by('-transaction__date_creation').first()
+        transaction = lignes.transaction
+        print(transaction.destinataire)
+        if unite_trouve.position != "En cours de transaction":
+            return Response({"detail": "La position ne peut être mise à jour que si l'unité est en cours de transaction."}, status=400)
+
+        if transaction.destinataire.username != utilisateur.username:
+            return Response({"detail": "Ces Produits ne vous sont pas destinés. Alertez Votre Superieur"}, status=400)
+        
+        for unite in unites:
+            unite.position = utilisateur.username
+            unite.save()
+            updated += 1
+
+        return Response({
+            "detail": f"Position mise à jour pour {updated} unité(s) du lot {lot.numero_lot}."
+        })
+
+
+    @action(detail=False, methods=['get'], url_path='historique')
+    def historique(self, request, pk=None):
+        """
+        ----------------------------------------------------------------------
+        Retourne l'historique des mouvements (transactions) d'une unité de produit.
+        Affiche l'enregistrement initial et toutes les transactions du lot.
+        ----------------------------------------------------------------------
+        Paramètres :
+            - uuid (query param) : UUID de l'unité concernée.
+        Retour :
+            - Liste formatée des mouvements de l'unité.
+        ----------------------------------------------------------------------
+        """
+         
+        uuid = request.query_params.get('uuid')
+        if not uuid:
+            return Response({"detail": "UUID requis."}, status=400)
+        try:
+            unite = UniteProduit.objects.get(uuid_produit=uuid)
+        except UniteProduit.DoesNotExist:
+            return Response({"detail": "Unité non trouvée."}, status=404)
+        # unite = self.get_object()
+        lot = unite.lot
+        fournisseur = lot.produit.fournisseur
 
         historique = []
-        # Ajout de l'événement d'enregistrement
-        fournisseur = unite.lot.produit.fournisseur
+
+        # Enregistrement initial
         historique.append({
-            "evenement": f"Produit Enregistré le {unite.lot.date_enregistrement.strftime('%d-%m-%Y')} par {fournisseur.username} à {fournisseur.ville}",
-            "date": unite.lot.date_enregistrement.strftime('%d-%m-%Y'),
-            "etat_mouvement": "Enregistré",
-            "emetteur": fournisseur.username,
-            "destinataire": "",
+            "date": lot.date_enregistrement.strftime('%d/%m/%Y - %H:%M'),
+            "titre": "🔵Enregistrement initial",
+            "details": [
+                f"Ajout du lot par : {fournisseur.username} ({fournisseur.role})",
+                f"→ Quantité enregistrée : {lot.quantite} unités",
+                "→ QR codes générés automatiquement."
+            ]
         })
 
         # Transactions du plus récent au plus ancien
         lignes = (
             ligne_transaction.objects
-            .filter(lots=unite.lot)
-            .select_related('transaction')
+            .filter(lots=lot)
+            .select_related('transaction', 'transaction__emetteur', 'transaction__destinataire')
             .order_by('-transaction__date_creation')
         )
+
         for ligne in lignes:
             transaction = ligne.transaction
-            if transaction.type_transaction == 'B2B':
-                etat = "En cours de transaction" if unite.position == "En cours de transaction" else "Transféré"
-            elif transaction.type_transaction == 'B2C':
-                etat = "Vendu"
+            emetteur = transaction.emetteur
+            destinataire = transaction.destinataire
+            type_tr = transaction.type_transaction
+
+            if type_tr == 'B2B':
+                titre = "🟡Transaction B2B"
+                etat = "→ Produit en stock chez le destinataire."
+            elif type_tr == 'B2C':
+                titre = "🟢Transaction B2C"
+                etat = "→ Produit marqué comme VENDU."
             else:
-                etat = "Inconnu"
+                titre = "⚪Transaction"
+                etat = ""
+
             historique.append({
-                "evenement": "",
-                "date": transaction.date_creation.strftime('%d-%m-%Y %H:%M'),
-                "etat_mouvement": etat,
-                "emetteur": transaction.emetteur,
-                "destinataire": transaction.destinataire,
+                "date": transaction.date_creation.strftime('%d/%m/%Y - %H:%M'),
+                "titre": titre,
+                "details": [
+                    f"De : {emetteur.username} ({emetteur.role})",
+                    f"Vers : {destinataire.username if destinataire else 'Client final'}"
+                    f" ({destinataire.role if destinataire else ''})",
+                    f"Quantité transférée : {ligne.quantite_totale} unités",
+                    etat 
+                ]
             })
 
-        return Response({
-            "unite": str(unite.uuid_produit),
-            "lot": unite.lot.numero_lot,
-            "actuelle_position": unite.position,
-            "est_active": unite.is_active,
-            "historique": historique
-        })
+        return Response(historique, status=200)
 
-    @action(detail=True, methods=['post'], url_path='maj-position')
-    def maj_position(self, request, pk=None):
-        """
-        Met à jour la position de l'unité si elle est 'En cours de transaction'.
-        """
-        unite = self.get_object()
-        utilisateur = request.user 
-        if unite.position != "En cours de transaction":
-            return Response({"detail": "La position ne peut être mise à jour que si l'unité est en cours de transaction."}, status=400)
-        unite.position = utilisateur.username
-        unite.save()
-        return Response({"detail": "Position mise à jour avec succès."})
-
-
-class HistoriqueUniteAPIView(APIView):
-    """
-    API pour consulter l'historique de mouvement d'une unité de produit à partir de son UUID.
-    """
-
-    def get(self, request):
-        code = request.query_params.get('code')
-        if not code:
-            return Response({"detail": "UUID de l’unité requis."}, status=400)
-
-        try:
-            unite = UniteProduit.objects.get(uuid_produit=code)
-        except UniteProduit.DoesNotExist:
-            return Response({"detail": "Unité non trouvée."}, status=404)
-
-        historique = []
-
-        # On récupère toutes les lignes de transaction liées au lot de cette unité
-        lignes = ligne_transaction.objects.filter(lots=unite.lot).order_by('transaction__date_creation')
-
-        for ligne in lignes:
-            transaction = ligne.transaction
-            historique.append({
-                "produit": ligne.produit.nom,
-                "numero_lot": unite.lot.numero_lot,
-                "quantite_transferee": ligne.quantite_totale,
-                "type_transaction": transaction.type_transaction,
-                "emetteur": transaction.emetteur,
-                "destinataire": transaction.destinataire,
-                "date": transaction.date_creation.strftime('%d-%m-%Y %H:%M'),
-            })
-
-        return Response({
-            "unite": str(unite.uuid_produit),
-            "lot": unite.lot.numero_lot,
-            "actuelle_position": unite.position,
-            "est_active": unite.is_active,
-            "historique": historique
-        }, status=200)
 class QRcodeViewSet(viewsets.ModelViewSet):
     queryset = QRcode.objects.all()
     serializer_class = QRcodeSerializer
@@ -262,11 +323,77 @@ class QRcodeViewSet(viewsets.ModelViewSet):
         return context
 
 
+class ExportQRCodesPDF(APIView):
+    """
+    ----------------------------------------------------------------------
+    API permettant de générer et télécharger un fichier PDF contenant
+    le QR code du lot ainsi que les QR codes de toutes les unités associées.
+    L'utilisateur doit être authentifié et avoir le rôle de fournisseur.
+    ----------------------------------------------------------------------
+    GET /api_produits/export_qr_pdf/<numero_lot>/
+    ----------------------------------------------------------------------
+    """
+
+    permission_classes = [IsFournisseurPermission]
+
+    def get(self, request, numero_lot):
+        """
+        Génère un PDF avec le QR code du lot et ceux de ses unités, puis le retourne en téléchargement.
+        :param request: Requête HTTP
+        :param numero_lot: Numéro du lot à exporter
+        :return: Fichier PDF en téléchargement
+        """
+
+        try:
+            lot = LotProduit.objects.get(numero_lot=numero_lot)
+        except LotProduit.DoesNotExist:
+            raise Http404("Lot non trouvé")
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        qr_size = 100
+        margin_x = 50
+        margin_y = 50
+        qr_per_row = 4
+        x = margin_x
+        y = height - 100
+
+        # 1. QR code du lot
+        if lot.qr_code:
+            p.drawString(margin_x, y, f"Code QR  du lot {lot.numero_lot} de {lot.quantite} d'unités du produit {lot.produit.nom}")
+            y -= 20
+            p.drawImage(ImageReader(lot.qr_code.path), margin_x, y-qr_size, width=qr_size, height=qr_size)
+            y -= qr_size + 40 # espace après le QR du lot
+
+        # 2. QR codes des unités
+        unites = lot.unites.all()
+        col = 0
+        for unite in unites:
+            if unite.qr_code and unite.qr_code.image:
+                p.drawImage(
+                    ImageReader(unite.qr_code.image.path),
+                    x, y-qr_size,
+                    width=qr_size, height=qr_size
+                )
+                p.drawString(x, y-qr_size-15, f"Unité {str(unite.uuid_produit)[-8:]}")
+                col += 1
+                x += qr_size + 30  # espace horizontal
+                if col >= qr_per_row:
+                    col = 0
+                    x = margin_x
+                    y -= qr_size + 50  # espace vertical
+                    if y < qr_size + margin_y:
+                        p.showPage()
+                        y = height - 100
+
+        p.save()
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename=f"qrcodes_{lot.numero_lot}.pdf")
+
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-
-
 
 class LigneTransactionViewSet(viewsets.ModelViewSet):
     queryset = ligne_transaction.objects.all()

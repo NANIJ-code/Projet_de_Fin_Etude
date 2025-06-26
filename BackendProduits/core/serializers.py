@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.conf import settings
 from .models import *
 from datetime import date
+from django.core.mail import send_mail
 
 class ProduitSerializer(serializers.ModelSerializer):
     """
@@ -173,16 +174,41 @@ class TransactionSerializer(serializers.ModelSerializer):
                     unite.position = "Vendu"
                     unite.is_active = False
                 unite.save()
-
+        # Envoi d'un email de confirmation
+        if destinataire and destinataire.email:
+            message = f"Bonjour {destinataire.username},\n\n"
+            message += f"Une nouvelle transaction a été enregistrée par {utilisateur.username}.\n"
+            message += f"Type de transaction: {transaction.type_transaction}\n"
+            message += "Détails des lignes de transaction:\n\n"
+            for ligne in lignes_data:
+                lots_str = ", ".join([lot.numero_lot for lot in ligne['lots']])
+                quantite = sum(lot.quantite for lot in ligne['lots'])
+                message += f"- Produit: {ligne['produit'].nom}\n - Lots: {lots_str}\n - Quantité d'unités: {quantite}\n\n"
+            message += f"\nPour plus d'informations, veuillez contacter l'émetteur de la transaction: {utilisateur.username} ({utilisateur.email})."
+            send_mail(
+                subject="Nouvelle Transaction",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[destinataire.email],
+                fail_silently=True,
+            )
         return transaction    
 
 
    
 class AlerteSerializer(serializers.ModelSerializer):
+
+    # lot = serializers.SerializerMethodField()
+
     class Meta:
         model = Alerte
-        fields = ['id', 'lot', 'unite', 'message', 'date_alerte']
+        fields = ['lot', 'unite', 'message', 'date_alerte']
     
+    def get_lot(self, obj):
+        return {
+            "Produit": obj.lot.produit.nom,
+            "Numero de Lot": obj.lot.numero_lot,
+        }
     def create(self, validated_data):
 
         emetteur = self.context['emetteur']
@@ -202,13 +228,15 @@ class AlerteSerializer(serializers.ModelSerializer):
         
         # Envoi du mail
         if destinataire and destinataire.email:
-            from django.core.mail import send_mail
+            message  += f"\n\n \t\t\t\t Détails de l'alerte:\nProduit: {lot.produit.nom}\nNuméro de lot: {lot.numero_lot}\n Unité Produit Concerné: N° {unite:id}"
+            message += f"\n\nPour plus d'informations, veuillez contacter l'émetteur de l'alerte: {emetteur.username} ({emetteur.email})"
+            
             send_mail(
                 subject="Alerte sur un produit",
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[destinataire.email],
-                fail_silently=False,
+                fail_silently=True,
             )
         for unite in lot.unites.all():
             # Désactive le produit en cas d'alerte

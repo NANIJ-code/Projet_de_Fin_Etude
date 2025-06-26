@@ -160,14 +160,13 @@ class QRcode(models.Model):
 
 class Alerte(models.Model):
     lot = models.ForeignKey(LotProduit, on_delete=models.CASCADE, null=True, blank=True)
-    message = models.TextField()
     unite = models.ForeignKey(UniteProduit, on_delete=models.CASCADE, null=True, blank=True)
     emetteur = models.ForeignKey('users.Utilisateur', on_delete=models.CASCADE, related_name='alertes_emises')
     destinataire = models.ForeignKey('users.Utilisateur', on_delete=models.CASCADE, related_name='alertes_recues')
     message = models.TextField()
     date_alerte = models.DateTimeField(auto_now_add=True)
     
-
+   
     def __str__(self):
         if self.lot:
             return f"Alerte pour {self.lot.produit.nom} - {self.message}"
