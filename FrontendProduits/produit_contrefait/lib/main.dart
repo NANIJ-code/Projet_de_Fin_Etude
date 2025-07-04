@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:camera/camera.dart';
 import 'package:produit_contrefait/providers/product_provider.dart';
-import 'package:produit_contrefait/screens/auth/login_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/dashboard/dashboard_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/scan/scan_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/user/user_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/product/product_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/alerts/alerts_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/settings/settings_screen.dart'; // Ajouté
-import 'package:produit_contrefait/screens/transaction/transaction_screen.dart'; // Ajouté
+import 'package:produit_contrefait/screens/auth/login_screen.dart';
+import 'package:produit_contrefait/screens/dashboard/dashboard_screen.dart';
+import 'package:produit_contrefait/screens/user/user_screen.dart';
+import 'package:produit_contrefait/screens/product/product_screen.dart';
+import 'package:produit_contrefait/screens/alerts/alerts_screen.dart';
+import 'package:produit_contrefait/screens/settings/settings_screen.dart';
+import 'package:produit_contrefait/screens/transaction/transaction_screen.dart';
+import 'package:produit_contrefait/screens/product/unite_produit_screen.dart';
+import 'package:produit_contrefait/screens/scan/scan_screen.dart';
 
-void main() {
+List<CameraDescription> cameras = [];
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    cameras = await availableCameras();
+  } on CameraException catch (e) {
+    debugPrint('Camera Error: ${e.description}');
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -31,9 +43,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFF42A5F5), // Bleu ciel
-          secondary: Color(0xFF64B5F6), // Bleu ciel plus clair
-          surface: Colors.white, // Fond très légèrement bleuté
+          primary: Color(0xFF42A5F5),
+          secondary: Color(0xFF64B5F6),
+          surface: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
@@ -61,12 +73,14 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
-        '/scan': (context) => const ScanScreen(),
+        '/scan': (context) =>
+            const ScanScreen(), // Modifié pour utiliser QrScanPage
         '/user': (context) => const UserScreen(),
         '/product': (context) => const ProductScreen(),
-        '/transaction': (context) => const TransactionScreen(), // Ajoute cette ligne
+        '/transaction': (context) => const TransactionScreen(),
         '/alerts': (context) => const AlertsScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/unite_produit': (context) => const UniteProduitScreen(),
       },
     );
   }

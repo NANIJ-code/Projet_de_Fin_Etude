@@ -1,9 +1,11 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:universal_html/html.dart' as html;
+import '../../services/product_service.dart';
+import 'unite_produit_screen.dart';
 
-// Sidebar stylée et navigation fonctionnelle
 class ResponsiveSidebar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
@@ -17,30 +19,30 @@ class ResponsiveSidebar extends StatefulWidget {
   State<ResponsiveSidebar> createState() => _ResponsiveSidebarState();
 }
 
-class _NavItem {
+class NavItem {
   final IconData icon;
   final String label;
   final String route;
-  const _NavItem(this.icon, this.label, this.route);
+  const NavItem(this.icon, this.label, this.route);
 }
+
+final List<NavItem> navItems = [
+  const NavItem(Icons.space_dashboard_outlined, "Dashboard", '/dashboard'),
+  const NavItem(Icons.qr_code_2_rounded, "Scan", '/scan'),
+  const NavItem(Icons.account_circle_outlined, "Utilisateur", '/user'),
+  const NavItem(Icons.inventory_2_outlined, "Produits", '/product'),
+  const NavItem(Icons.swap_horiz, "Transaction", '/transaction'),
+  const NavItem(Icons.notifications_active_outlined, "Alertes", '/alerts'),
+  const NavItem(Icons.settings, "Paramètres", '/settings'),
+];
 
 class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
   bool _isHovered = false;
 
-  final List<_NavItem> navItems = const [
-    _NavItem(Icons.space_dashboard_outlined, "Dashboard", '/dashboard'),
-    _NavItem(Icons.qr_code_2_rounded, "Scan", '/scan'),
-    _NavItem(Icons.account_circle_outlined, "Utilisateur", '/user'),
-    _NavItem(Icons.inventory_2_outlined, "Produits", '/product'),
-    _NavItem(Icons.swap_horiz, "Transaction", '/transaction'),
-    _NavItem(Icons.notifications_active_outlined, "Alertes", '/alerts'),
-    _NavItem(Icons.settings, "Paramètres", '/settings'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-    final sidebarWidth = _isHovered || isMobile ? 220.0 : 80.0;
+    final sidebarWidth = _isHovered || isMobile ? 200.0 : 70.0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -51,87 +53,86 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
         constraints: BoxConstraints(maxWidth: sidebarWidth),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.blueGrey.withOpacity(0.10),
-              blurRadius: 30,
-              offset: const Offset(0, 8),
+              color: Colors.blueGrey.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Column(
           children: [
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
             Center(
               child: Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A6FC9).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.security,
-                    color: Color(0xFF1A6FC9), size: 28),
+                    color: Color(0xFF1A6FC9), size: 24),
               ),
             ),
             if (_isHovered || isMobile)
               Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                padding: const EdgeInsets.only(top: 10, bottom: 6),
                 child: Text(
                   "SecureScan",
                   style: GoogleFonts.playfairDisplay(
-                    fontSize: 20,
+                    fontSize: 18,
                     color: const Color(0xFF1A6FC9),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             ...List.generate(navItems.length, (i) {
               final item = navItems[i];
               final isActive = widget.selectedIndex == i;
               return InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 onTap: () => widget.onItemSelected(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
                   padding: EdgeInsets.symmetric(
                     vertical: 2,
-                    horizontal: _isHovered || isMobile ? 8 : 0,
+                    horizontal: _isHovered || isMobile ? 6 : 0,
                   ),
                   decoration: BoxDecoration(
                     color: isActive
                         ? const Color(0xFF1A6FC9).withOpacity(0.13)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        width: 36,
+                        height: 36,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: isActive
                               ? const Color(0xFF1A6FC9).withOpacity(0.18)
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           item.icon,
                           color: isActive
                               ? const Color(0xFF1A6FC9)
                               : const Color(0xFFB3B8C8),
-                          size: 26,
+                          size: 22,
                         ),
                       ),
                       if (_isHovered || isMobile)
                         Padding(
-                          padding: const EdgeInsets.only(left: 16),
+                          padding: const EdgeInsets.only(left: 12),
                           child: Text(
                             item.label,
                             style: GoogleFonts.montserrat(
@@ -141,7 +142,7 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                               fontWeight: isActive
                                   ? FontWeight.w600
                                   : FontWeight.normal,
-                              fontSize: 15,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -153,24 +154,24 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
             const Spacer(),
             Center(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 18),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 36,
+                      height: 36,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A6FC9).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.person,
-                          color: Color(0xFF1A6FC9), size: 26),
+                          color: Color(0xFF1A6FC9), size: 22),
                     ),
                     if (_isHovered || isMobile)
                       Padding(
-                        padding: const EdgeInsets.only(left: 12),
+                        padding: const EdgeInsets.only(left: 10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -179,14 +180,14 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                               style: GoogleFonts.montserrat(
                                 color: const Color(0xFF1A6FC9),
                                 fontWeight: FontWeight.w600,
-                                fontSize: 15,
+                                fontSize: 13,
                               ),
                             ),
                             Text(
                               "Administrateur",
                               style: GoogleFonts.montserrat(
                                 color: Colors.blueGrey,
-                                fontSize: 12,
+                                fontSize: 15,
                               ),
                             ),
                           ],
@@ -212,60 +213,58 @@ class ProductScreen extends StatefulWidget {
 }
 
 class _ProductScreenState extends State<ProductScreen> {
-  int selectedIndex = 3;
-
-  List<Map<String, dynamic>> produits = [
-    {
-      'nom': 'Paracétamol',
-      'prix': '1000',
-      'description': 'Antidouleur',
-      'fournisseur': 'Sanofi'
-    },
-    {
-      'nom': 'Ibuprofène',
-      'prix': '1200',
-      'description': 'Anti-inflammatoire',
-      'fournisseur': 'Bayer'
-    },
-  ];
-  List<Map<String, dynamic>> lots = [
-    {
-      'numero': 'L001',
-      'produit': 'Paracétamol',
-      'quantite': '50',
-      'dateEnreg': '2024-06-21',
-      'dateExp': '2025-01-01',
-      'qr': 'QR1'
-    },
-    {
-      'numero': 'L002',
-      'produit': 'Ibuprofène',
-      'quantite': '30',
-      'dateEnreg': '2024-06-21',
-      'dateExp': '2024-12-01',
-      'qr': 'QR2'
-    },
-  ];
-
+  List<Map<String, dynamic>> produits = [];
+  List<Map<String, dynamic>> lots = [];
   String searchProduit = '';
   String searchLot = '';
 
-  // Pour le formulaire produit
+  bool _isLoading = false;
+  String? _error;
+  int _produitPage = 0;
+  int _lotPage = 0;
+  final int _pageSize = 10;
+  int selectedIndex = 3; // Correspond à "Produits" dans la sidebar
+  String? nomProduit, prixProduit, descProduit, fournisseurProduit;
+  String? produitLot, quantiteLot, dateExpLot;
   final _formProduitKey = GlobalKey<FormState>();
-  String? nomProduit;
-  String? prixProduit;
-  String? descProduit;
-  String? fournisseurProduit;
-
-  // Pour le formulaire lot
   final _formLotKey = GlobalKey<FormState>();
-  String? produitLot;
-  String? quantiteLot;
-  String? dateExpLot;
+  final _dateExpController = TextEditingController();
 
-  // Pour le formulaire QR Code
-  String? produitQr;
-  String? numeroLotQr;
+  @override
+  void initState() {
+    super.initState();
+    _loadAll();
+  }
+
+  @override
+  void dispose() {
+    _dateExpController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAll() async {
+    setState(() => _isLoading = true);
+    try {
+      await Future.wait([
+        _loadProduits(),
+        _loadLots(),
+      ]);
+    } catch (e) {
+      setState(() => _error = 'Erreur de chargement: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadProduits() async {
+    final data = await ProductService.fetchProduits();
+    setState(() => produits = List<Map<String, dynamic>>.from(data));
+  }
+
+  Future<void> _loadLots() async {
+    final data = await ProductService.fetchLots();
+    setState(() => lots = List<Map<String, dynamic>>.from(data));
+  }
 
   void _openAddProduitDialog() {
     nomProduit = null;
@@ -274,61 +273,93 @@ class _ProductScreenState extends State<ProductScreen> {
     fournisseurProduit = null;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text("Ajouter un produit"),
         content: SizedBox(
-          width: 350,
+          width: 300,
           child: Form(
             key: _formProduitKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  decoration: const InputDecoration(labelText: "Nom"),
-                  onChanged: (v) => nomProduit = v,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? "Champ requis" : null,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: "Prix"),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => prixProduit = v,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? "Champ requis" : null,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: "Description"),
-                  onChanged: (v) => descProduit = v,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? "Champ requis" : null,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: "Fournisseur"),
-                  onChanged: (v) => fournisseurProduit = v,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? "Champ requis" : null,
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    initialValue: nomProduit,
+                    decoration: const InputDecoration(
+                      labelText: "Nom",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    style: const TextStyle(fontSize: 12),
+                    onChanged: (v) => nomProduit = v,
+                    validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                  ),
+                  TextFormField(
+                    initialValue: descProduit,
+                    decoration: const InputDecoration(
+                      labelText: "Description",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    style: const TextStyle(fontSize: 12),
+                    onChanged: (v) => descProduit = v,
+                  ),
+                  TextFormField(
+                    initialValue: prixProduit,
+                    decoration: const InputDecoration(
+                      labelText: "Prix",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 12),
+                    onChanged: (v) => prixProduit = v,
+                    validator: (v) => v == null || v.isEmpty || double.tryParse(v) == null
+                        ? "Prix requis et numérique"
+                        : null,
+                  ),
+                  TextFormField(
+                    initialValue: fournisseurProduit,
+                    decoration: const InputDecoration(
+                      labelText: "Fournisseur (id)",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 12),
+                    onChanged: (v) => fournisseurProduit = v,
+                    validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Annuler"),
-          ),
+              onPressed: () => Navigator.pop(ctx), child: const Text("Annuler")),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_formProduitKey.currentState?.validate() ?? false) {
-                setState(() {
-                  produits.add({
-                    'nom': nomProduit!,
-                    'prix': prixProduit!,
-                    'description': descProduit!,
-                    'fournisseur': fournisseurProduit!,
-                  });
-                });
-                Navigator.of(context).pop();
+                final data = {
+                  "nom": nomProduit,
+                  "description": descProduit,
+                  "prix": double.tryParse(prixProduit ?? '') ?? 0.0,
+                  "fournisseur": int.tryParse(fournisseurProduit ?? '') ?? 0,
+                };
+                final success = await ProductService.addProduit(data);
+                if (success) {
+                  Navigator.pop(ctx);
+                  await _loadProduits();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Produit ajouté !"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Erreur lors de l'opération"),
+                        backgroundColor: Colors.red),
+                  );
+                }
               }
             },
             child: const Text("Ajouter"),
@@ -342,82 +373,104 @@ class _ProductScreenState extends State<ProductScreen> {
     produitLot = null;
     quantiteLot = null;
     dateExpLot = null;
+    _dateExpController.clear();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text("Ajouter un lot"),
         content: SizedBox(
-          width: 350,
+          width: 300,
           child: Form(
             key: _formLotKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Produit"),
-                  value: produitLot,
-                  items: produits
-                      .map((p) => DropdownMenuItem(
-                            value: p['nom'] as String,
-                            child: Text(p['nom'] as String),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setState(() => produitLot = v),
-                  validator: (v) => v == null ? "Champ requis" : null,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: "Quantité"),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => quantiteLot = v,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? "Champ requis" : null,
-                ),
-                TextFormField(
-                  decoration:
-                      const InputDecoration(labelText: "Date d'expiration"),
-                  readOnly: true,
-                  controller: TextEditingController(text: dateExpLot),
-                  onTap: () async {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        dateExpLot = picked.toIso8601String().substring(0, 10);
-                      });
-                    }
-                  },
-                  validator: (v) =>
-                      v == null || v.isEmpty ? "Champ requis" : null,
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: "Produit",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    value: produitLot,
+                    items: produits
+                        .map((p) => DropdownMenuItem<String>(
+                              value: p['id'].toString(),
+                              child: Text(p['nom'] ?? '', style: const TextStyle(fontSize: 12)),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => produitLot = v),
+                    validator: (v) => v == null ? "Champ requis" : null,
+                  ),
+                  TextFormField(
+                    initialValue: quantiteLot,
+                    decoration: const InputDecoration(
+                      labelText: "Quantité",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 12),
+                    onChanged: (v) => quantiteLot = v,
+                    validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                  ),
+                  TextFormField(
+                    controller: _dateExpController,
+                    decoration: const InputDecoration(
+                      labelText: "Date d'expiration (YYYY-MM-DD)",
+                      labelStyle: TextStyle(fontSize: 12),
+                    ),
+                    style: const TextStyle(fontSize: 12),
+                    readOnly: true,
+                    onTap: () async {
+                      FocusScope.of(context).requestFocus(FocusNode());
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          dateExpLot = picked.toIso8601String().substring(0, 10);
+                          _dateExpController.text = dateExpLot!;
+                        });
+                      }
+                    },
+                    validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Annuler"),
-          ),
+              onPressed: () => Navigator.pop(ctx), child: const Text("Annuler")),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_formLotKey.currentState?.validate() ?? false) {
-                setState(() {
-                  lots.add({
-                    'numero': 'L${lots.length + 1}'.padLeft(4, '0'),
-                    'produit': produitLot!,
-                    'quantite': quantiteLot!,
-                    'dateEnreg':
-                        DateTime.now().toIso8601String().substring(0, 10),
-                    'dateExp': dateExpLot!,
-                    'qr': 'QR${lots.length + 1}'
-                  });
-                });
-                Navigator.of(context).pop();
+                final data = {
+                  "produit": int.tryParse(produitLot ?? '') ?? 0,
+                  "numero_lot": "LOT-${DateTime.now().millisecondsSinceEpoch}",
+                  "quantite": int.tryParse(quantiteLot ?? '') ?? 0,
+                  "date_expiration": dateExpLot,
+                };
+                final success = await ProductService.addLot(data);
+                if (success) {
+                  Navigator.pop(ctx);
+                  await _loadLots();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Lot ajouté !"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Erreur lors de l'opération"),
+                        backgroundColor: Colors.red),
+                  );
+                }
               }
             },
             child: const Text("Ajouter"),
@@ -427,68 +480,95 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  void _openQrCodeDialog() {
-    produitQr = null;
-    numeroLotQr = null;
+  void _openExportQrPdfDialog() {
+    String? selectedProduit;
+    String? selectedLot;
+    List<Map<String, dynamic>> filteredLots = [];
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Générer un QR Code"),
-        content: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Produit"),
-                value: produitQr,
-                items: produits
-                    .map((p) => DropdownMenuItem(
-                          value: p['nom'] as String,
-                          child: Text(p['nom'] as String),
-                        ))
-                    .toList(),
-                onChanged: (v) {
-                  setState(() {
-                    produitQr = v;
-                    numeroLotQr = null;
-                  });
-                },
-                validator: (v) => v == null ? "Champ requis" : null,
-              ),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Numéro de lot"),
-                value: numeroLotQr,
-                items: lots
-                    .where(
-                        (l) => produitQr == null || l['produit'] == produitQr)
-                    .map((l) => DropdownMenuItem(
-                          value: l['numero'] as String,
-                          child: Text(l['numero'] as String),
-                        ))
-                    .toList(),
-                onChanged: (v) => setState(() => numeroLotQr = v),
-                validator: (v) => v == null ? "Champ requis" : null,
-              ),
-            ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text("Exporter QR Code en PDF"),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: "Sélectionner un produit",
+                    labelStyle: TextStyle(fontSize: 12),
+                  ),
+                  value: selectedProduit,
+                  items: produits
+                      .map((p) => DropdownMenuItem<String>(
+                            value: p['id'].toString(),
+                            child: Text(p['nom'] ?? '', style: const TextStyle(fontSize: 12)),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    setState(() {
+                      selectedProduit = v;
+                      selectedLot = null;
+                      filteredLots = lots.where((l) => l['produit'].toString() == v).toList();
+                    });
+                  },
+                  validator: (v) => v == null ? "Champ requis" : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: "Sélectionner un lot",
+                    labelStyle: TextStyle(fontSize: 12),
+                  ),
+                  value: selectedLot,
+                  items: filteredLots
+                      .map((l) => DropdownMenuItem<String>(
+                            value: l['numero_lot'],
+                            child: Text(l['numero_lot'] ?? '', style: const TextStyle(fontSize: 12)),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => selectedLot = v),
+                  validator: (v) => v == null ? "Champ requis" : null,
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx), child: const Text("Annuler")),
+            ElevatedButton(
+              onPressed: selectedLot == null
+                  ? null
+                  : () async {
+                      final pdfData = await ProductService.exportQrCodePdf(selectedLot!);
+                      if (pdfData != null) {
+                        final blob = html.Blob([pdfData], 'application/pdf');
+                        final url = html.Url.createObjectUrlFromBlob(blob);
+                        html.AnchorElement(href: url)
+                          ..setAttribute('download', 'qr_code_$selectedLot.pdf')
+                          ..click();
+                        html.Url.revokeObjectUrl(url);
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("PDF exporté avec succès !"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Erreur: Aucun PDF retourné"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+              child: const Text("Télécharger"),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Annuler"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text("QR Code téléchargé (simulation)")),
-              );
-            },
-            child: const Text("Télécharger"),
-          ),
-        ],
       ),
     );
   }
@@ -499,23 +579,25 @@ class _ProductScreenState extends State<ProductScreen> {
       final q = searchProduit.toLowerCase();
       return p.values.any((v) => v.toString().toLowerCase().contains(q));
     }).toList();
-
     final filteredLots = lots.where((l) {
       final q = searchLot.toLowerCase();
       return l.values.any((v) => v.toString().toLowerCase().contains(q));
     }).toList();
 
-    const List<_NavItem> navItems = [
-      _NavItem(Icons.space_dashboard_outlined, "Dashboard", '/dashboard'),
-      _NavItem(Icons.qr_code_2_rounded, "Scan", '/scan'),
-      _NavItem(Icons.account_circle_outlined, "Utilisateur", '/user'),
-      _NavItem(Icons.inventory_2_outlined, "Produits", '/product'),
-      _NavItem(Icons.swap_horiz, "Transaction", '/transaction'),
-      _NavItem(Icons.notifications_active_outlined, "Alertes", '/alerts'),
-      _NavItem(Icons.settings, "Paramètres", '/settings'),
-    ];
-
     final isMobile = MediaQuery.of(context).size.width < 900;
+
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(child: Text(_error!, style: const TextStyle(color: Colors.red)));
+    }
+
+    final produitStart = _produitPage * _pageSize;
+    final produitEnd = (_produitPage + 1) * _pageSize;
+    final paginatedProduits = filteredProduits.skip(produitStart).take(_pageSize).toList();
+
+    final lotStart = _lotPage * _pageSize;
+    final lotEnd = (_lotPage + 1) * _pageSize;
+    final paginatedLots = filteredLots.skip(lotStart).take(_pageSize).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
@@ -531,22 +613,22 @@ class _ProductScreenState extends State<ProductScreen> {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.all(isMobile ? 8.0 : 32.0),
+                padding: EdgeInsets.all(isMobile ? 8.0 : 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Entête stylé en haut de la page
+                    // Entête
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 32.0),
+                      padding: const EdgeInsets.only(bottom: 16.0),
                       child: Row(
                         children: [
                           const Icon(Icons.inventory_2_outlined,
-                              color: Color(0xFF4E4FEB), size: 36),
-                          const SizedBox(width: 12),
+                              color: Color(0xFF4E4FEB), size: 24),
+                          const SizedBox(width: 8),
                           Text(
                             "Gestion des produits",
                             style: GoogleFonts.playfairDisplay(
-                              fontSize: 28,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFF1A1A2E),
                             ),
@@ -554,13 +636,13 @@ class _ProductScreenState extends State<ProductScreen> {
                         ],
                       ),
                     ),
-                    // Section Produits
+                    // --- TITRE PRODUITS ---
                     Row(
                       children: [
                         Text(
                           "Produits",
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: 22,
+                            fontSize: 26, // Augmenté
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF1A1A2E),
                           ),
@@ -571,146 +653,337 @@ class _ProductScreenState extends State<ProductScreen> {
                             backgroundColor: const Color(0xFF4E4FEB),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
                           ),
                           onPressed: _openAddProduitDialog,
-                          icon: const Icon(Icons.add),
-                          label: const Text("Ajouter un produit"),
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text("Ajouter un produit",
+                              style: TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     SizedBox(
-                      width: isMobile ? double.infinity : 350,
+                      width: isMobile ? double.infinity : 250,
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: "Rechercher un produit...",
-                          prefixIcon: const Icon(Icons.search),
+                          prefixIcon: const Icon(Icons.search, size: 16),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
                           fillColor: const Color(0xFFF1F1F3),
                         ),
+                        style: const TextStyle(fontSize: 12),
                         onChanged: (v) => setState(() => searchProduit = v),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(minWidth: 900),
+                          constraints: BoxConstraints(
+                            minWidth: MediaQuery.of(context).size.width - (isMobile ? 0 : 100),
+                          ),
                           child: DataTable(
-                            columnSpacing: 32,
-                            horizontalMargin: 18,
+                            columnSpacing: 25,
+                            horizontalMargin: 20,
                             headingRowColor:
                                 WidgetStateProperty.resolveWith<Color?>(
-                              (states) =>
-                                  const Color(0xFF4E4FEB).withOpacity(0.08),
-                            ),
+                                    (states) =>
+                                        const Color(0xFF4E4FEB).withOpacity(0.08)),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color:
-                                      const Color(0xFF4E4FEB).withOpacity(0.15),
-                                  width: 1.5),
+                                  color: const Color(0xFF4E4FEB).withOpacity(0.15),
+                                  width: 1),
                               color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
                             columns: [
                               DataColumn(
                                   label: Text("Nom",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Prix",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Description",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Fournisseur",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Actions",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                             ],
-                            rows: filteredProduits
-                                .map((p) => DataRow(
-                                      cells: [
-                                        DataCell(Text(p['nom'] ?? '')),
-                                        DataCell(Text(p['prix'] ?? '')),
-                                        DataCell(Text(p['description'] ?? '')),
-                                        DataCell(Text(p['fournisseur'] ?? '')),
-                                        DataCell(
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(Icons.edit,
-                                                      color: Colors.blue),
-                                                  tooltip: "Modifier",
-                                                  onPressed: () {},
+                            rows: paginatedProduits.map((p) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(
+                                    p['nom'] ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    p['prix']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    p['description'] ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    p['fournisseur']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 140,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                color: Colors.blue, size: 28),
+                                            tooltip: "Modifier",
+                                            onPressed: () {
+                                              nomProduit = p['nom'];
+                                              prixProduit = p['prix']?.toString();
+                                              descProduit = p['description'];
+                                              fournisseurProduit = p['fournisseur']?.toString();
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text("Modifier le produit"),
+                                                  content: SizedBox(
+                                                    width: 300,
+                                                    child: Form(
+                                                      key: _formProduitKey,
+                                                      child: SingleChildScrollView(
+                                                        child: Column(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            TextFormField(
+                                                              initialValue: nomProduit,
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Nom",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              style: const TextStyle(fontSize: 12),
+                                                              onChanged: (v) => nomProduit = v,
+                                                              validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                                                            ),
+                                                            TextFormField(
+                                                              initialValue: prixProduit,
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Prix",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              keyboardType: TextInputType.number,
+                                                              style: const TextStyle(fontSize: 12),
+                                                              onChanged: (v) => prixProduit = v,
+                                                              validator: (v) => v == null || v.isEmpty || double.tryParse(v) == null
+                                                                  ? "Prix requis et numérique"
+                                                                  : null,
+                                                            ),
+                                                            TextFormField(
+                                                              initialValue: descProduit,
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Description",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              style: const TextStyle(fontSize: 12),
+                                                              onChanged: (v) => descProduit = v,
+                                                            ),
+                                                            TextFormField(
+                                                              initialValue: fournisseurProduit,
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Fournisseur",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              keyboardType: TextInputType.number,
+                                                              style: const TextStyle(fontSize: 12),
+                                                              onChanged: (v) => fournisseurProduit = v,
+                                                              validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text("Annuler"),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () async {
+                                                        if (_formProduitKey.currentState?.validate() ?? false) {
+                                                          final success = await ProductService.updateProduit(p['id'], {
+                                                            'nom': nomProduit!,
+                                                            'prix': double.tryParse(prixProduit!) ?? 0.0,
+                                                            'description': descProduit!,
+                                                            'fournisseur': int.tryParse(fournisseurProduit!) ?? 0,
+                                                          });
+                                                          if (success) {
+                                                            await _loadProduits();
+                                                            Navigator.of(context).pop();
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text("Produit modifié !"),
+                                                                  backgroundColor: Colors.green),
+                                                            );
+                                                          } else {
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text("Erreur lors de la modification"),
+                                                                  backgroundColor: Colors.red),
+                                                            );
+                                                          }
+                                                        }
+                                                      },
+                                                      child: const Text("Enregistrer"),
+                                                    ),
+                                                  ],
                                                 ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.delete,
-                                                      color: Colors.red),
-                                                  tooltip: "Supprimer",
-                                                  onPressed: () {},
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(
-                                                      Icons.remove_red_eye,
-                                                      color: Colors.grey),
-                                                  tooltip: "Consulter",
-                                                  onPressed: () {},
-                                                ),
-                                              ],
-                                            ),
+                                              );
+                                            },
                                           ),
-                                        ),
-                                      ],
-                                    ))
-                                .toList(),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red, size: 28),
+                                            tooltip: "Supprimer",
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (ctx) => AlertDialog(
+                                                  title: const Text("Confirmation"),
+                                                  content: const Text("Supprimer ce produit ?"),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, false),
+                                                        child: const Text("Annuler")),
+                                                    TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, true),
+                                                        child: const Text("Supprimer")),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirm == true) {
+                                                final success = await ProductService.deleteProduit(p['id']);
+                                                if (success) {
+                                                  await _loadProduits();
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text("Produit supprimé"),
+                                                        backgroundColor: Colors.green),
+                                                  );
+                                                } else {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text("Erreur suppression"),
+                                                        backgroundColor: Colors.red),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.remove_red_eye,
+                                                color: Colors.grey, size: 28),
+                                            tooltip: "Consulter",
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (ctx) => AlertDialog(
+                                                  title: const Text("Détail du produit"),
+                                                  content: Text(
+                                                    "Nom : ${p['nom']}\n"
+                                                    "Prix : ${p['prix']}\n"
+                                                    "Description : ${p['description']}\n"
+                                                    "Fournisseur : ${p['fournisseur'] ?? ''}",
+                                                    style: const TextStyle(fontSize: 12),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () => Navigator.pop(ctx),
+                                                        child: const Text("Fermer")),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    // Section Lots avec boutons sur la même ligne que le titre
+                    // Pagination pour les produits
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                            'Page ${_produitPage + 1} / ${((filteredProduits.length - 1) / _pageSize).floor() + 1}',
+                            style: const TextStyle(fontSize: 12)),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, size: 16),
+                          onPressed: _produitPage > 0
+                              ? () => setState(() => _produitPage--)
+                              : null,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward, size: 16),
+                          onPressed: produitEnd < filteredProduits.length
+                              ? () => setState(() => _produitPage++)
+                              : null,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // --- TITRE LOTS ---
                     Row(
                       children: [
                         Text(
                           "Lots",
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: 22,
+                            fontSize: 26, // Augmenté
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF1A1A2E),
                           ),
@@ -721,161 +994,444 @@ class _ProductScreenState extends State<ProductScreen> {
                             backgroundColor: const Color(0xFF4E4FEB),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
                           ),
                           onPressed: _openAddLotDialog,
-                          icon: const Icon(Icons.add),
-                          label: const Text("Ajouter un lot"),
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text("Ajouter un lot",
+                              style: TextStyle(fontSize: 12)),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
                           ),
-                          onPressed: _openQrCodeDialog,
-                          icon: const Icon(Icons.qr_code),
-                          label: const Text("Qr Code"),
+                          onPressed: _openExportQrPdfDialog,
+                          icon: const Icon(Icons.qr_code, size: 16),
+                          label: const Text("QR Code", style: TextStyle(fontSize: 12)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const UniteProduitScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.view_list, size: 16),
+                          label: const Text("Unité de produit",
+                              style: TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     SizedBox(
-                      width: isMobile ? double.infinity : 350,
+                      width: isMobile ? double.infinity : 250,
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: "Rechercher un lot...",
-                          prefixIcon: const Icon(Icons.search),
+                          prefixIcon: const Icon(Icons.search, size: 16),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
                           fillColor: const Color(0xFFF1F1F3),
                         ),
+                        style: const TextStyle(fontSize: 12),
                         onChanged: (v) => setState(() => searchLot = v),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
+                    // --- TABLE DES LOTS ---
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(minWidth: 900),
+                          constraints: BoxConstraints(
+                            minWidth: MediaQuery.of(context).size.width - (isMobile ? 0 : 100), // même que produits
+                          ),
                           child: DataTable(
-                            columnSpacing: 27,
-                            horizontalMargin: 18,
+                            columnSpacing: 25,
+                            horizontalMargin: 20,
                             headingRowColor:
                                 WidgetStateProperty.resolveWith<Color?>(
-                              (states) =>
-                                  const Color(0xFF4E4FEB).withOpacity(0.08),
-                            ),
+                                    (states) =>
+                                        const Color(0xFF4E4FEB).withOpacity(0.08)),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color:
-                                      const Color(0xFF4E4FEB).withOpacity(0.15),
-                                  width: 1.5),
+                                  color: const Color(0xFF4E4FEB).withOpacity(0.15),
+                                  width: 1),
                               color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
                             columns: [
                               DataColumn(
                                   label: Text("N° Lot",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Produit",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Qté",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Date d'ajout",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Date d'exp",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
-                                  label: Text("Qr Code",
+                                  label: Text("QR Code",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                               DataColumn(
                                   label: Text("Actions",
                                       style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold))),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15))),
                             ],
-                            rows: filteredLots
-                                .map((l) => DataRow(
-                                      cells: [
-                                        DataCell(Text(l['numero'] ?? '')),
-                                        DataCell(Text(l['produit'] ?? '')),
-                                        DataCell(Text(l['quantite'] ?? '')),
-                                        DataCell(Text(l['dateEnreg'] ?? '')),
-                                        DataCell(Text(l['dateExp'] ?? '')),
-                                        DataCell(
+                            rows: paginatedLots.map((l) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(
+                                    l['numero_lot']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    produits
+                                            .firstWhere(
+                                                (p) => p['id'] == l['produit'],
+                                                orElse: () =>
+                                                    {'nom': 'Inconnu'})['nom']
+                                            ?.toString() ??
+                                        'Inconnu',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    l['quantite']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    l['date_enregistrement']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(Text(
+                                    l['date_expiration']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 15),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  DataCell(
+                                    (l['qr_code']?.toString().isNotEmpty ?? false)
+                                        ? Image.network(
+                                            l['qr_code'],
+                                            width: 32,
+                                            height: 32,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Icon(Icons.qr_code,
+                                                    color: Colors.grey, size: 20),
+                                          )
+                                        : const Icon(Icons.qr_code,
+                                            color: Colors.grey, size: 20),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 140,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
                                           IconButton(
-                                            icon: const Icon(Icons.qr_code,
-                                                color: Colors.green),
-                                            tooltip: "Voir QR Code",
-                                            onPressed: () {},
+                                            icon: const Icon(Icons.edit,
+                                                color: Colors.blue, size: 28),
+                                            tooltip: "Modifier",
+                                            onPressed: () {
+                                              produitLot = l['produit']?.toString();
+                                              quantiteLot = l['quantite']?.toString();
+                                              dateExpLot = l['date_expiration']?.toString();
+                                              _dateExpController.text = dateExpLot ?? '';
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text("Modifier le lot"),
+                                                  content: SizedBox(
+                                                    width: 300,
+                                                    child: Form(
+                                                      key: _formLotKey,
+                                                      child: SingleChildScrollView(
+                                                        child: Column(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            DropdownButtonFormField<String>(
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Produit",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              value: produitLot,
+                                                              items: produits
+                                                                  .map((p) => DropdownMenuItem(
+                                                                        value: p['id'].toString(),
+                                                                        child: Text(
+                                                                          p['nom'] ?? '',
+                                                                          style: const TextStyle(fontSize: 12),
+                                                                          overflow: TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ))
+                                                                  .toList(),
+                                                              onChanged: (v) => setState(() => produitLot = v),
+                                                              validator: (v) => v == null ? "Champ requis" : null,
+                                                            ),
+                                                            TextFormField(
+                                                              initialValue: quantiteLot,
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Quantité",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              keyboardType: TextInputType.number,
+                                                              style: const TextStyle(fontSize: 12),
+                                                              onChanged: (v) => quantiteLot = v,
+                                                              validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                                                            ),
+                                                            TextFormField(
+                                                              readOnly: true,
+                                                              controller: _dateExpController,
+                                                              decoration: const InputDecoration(
+                                                                labelText: "Date d'expiration",
+                                                                labelStyle: TextStyle(fontSize: 12),
+                                                              ),
+                                                              style: const TextStyle(fontSize: 12),
+                                                              onTap: () async {
+                                                                FocusScope.of(context).requestFocus(FocusNode());
+                                                                final picked = await showDatePicker(
+                                                                  context: context,
+                                                                  initialDate: DateTime.tryParse(dateExpLot ?? '') ?? DateTime.now(),
+                                                                  firstDate: DateTime(2020),
+                                                                  lastDate: DateTime(2100),
+                                                                );
+                                                                if (picked != null) {
+                                                                  setState(() {
+                                                                    dateExpLot = picked.toIso8601String().substring(0, 10);
+                                                                    _dateExpController.text = dateExpLot!;
+                                                                  });
+                                                                }
+                                                              },
+                                                              validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text("Annuler"),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () async {
+                                                        if (_formLotKey.currentState?.validate() ?? false) {
+                                                          final success = await ProductService.updateLot(l['id'], {
+                                                            'produit': int.tryParse(produitLot!) ?? 0,
+                                                            'quantite': int.tryParse(quantiteLot!) ?? 0,
+                                                            'date_expiration': dateExpLot!,
+                                                          });
+                                                          if (success) {
+                                                            await _loadLots();
+                                                            Navigator.of(context).pop();
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text("Lot modifié !"),
+                                                                  backgroundColor: Colors.green),
+                                                            );
+                                                          } else {
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text("Erreur lors de la modification"),
+                                                                  backgroundColor: Colors.red),
+                                                            );
+                                                          }
+                                                        }
+                                                      },
+                                                      child: const Text("Enregistrer"),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        ),
-                                        DataCell(Row(
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.edit,
-                                                  color: Colors.blue),
-                                              tooltip: "Modifier",
-                                              onPressed: () {},
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete,
-                                                  color: Colors.red),
-                                              tooltip: "Supprimer",
-                                              onPressed: () {},
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                  Icons.remove_red_eye,
-                                                  color: Colors.grey),
-                                              tooltip: "Consulter",
-                                              onPressed: () {},
-                                            ),
-                                          ],
-                                        )),
-                                      ],
-                                    ))
-                                .toList(),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red, size: 28),
+                                            tooltip: "Supprimer",
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (ctx) => AlertDialog(
+                                                  title: const Text("Confirmation"),
+                                                  content: const Text("Supprimer ce lot ?"),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, false),
+                                                        child: const Text("Annuler")),
+                                                    TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, true),
+                                                        child: const Text("Supprimer")),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirm == true) {
+                                                final success = await ProductService.deleteLot(l['id']);
+                                                if (success) {
+                                                  await _loadLots();
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text("Lot supprimé"),
+                                                        backgroundColor: Colors.green),
+                                                  );
+                                                } else {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text("Erreur suppression"),
+                                                        backgroundColor: Colors.red),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.remove_red_eye,
+                                                color: Colors.grey, size: 28),
+                                            tooltip: "Consulter",
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (ctx) => AlertDialog(
+                                                  title: const Text("Détail du lot"),
+                                                  content: SingleChildScrollView(
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          "N° Lot : ${l['numero_lot'] ?? ''}",
+                                                          style: const TextStyle(fontSize: 12),
+                                                        ),
+                                                        Text(
+                                                          "Produit : ${produits.firstWhere((p) => p['id'] == l['produit'], orElse: () => {'nom': 'Inconnu'})['nom']}",
+                                                          style: const TextStyle(fontSize: 12),
+                                                        ),
+                                                        Text(
+                                                          "Quantité : ${l['quantite'] ?? ''}",
+                                                          style: const TextStyle(fontSize: 12),
+                                                        ),
+                                                        Text(
+                                                          "Date d'ajout : ${l['date_enregistrement'] ?? ''}",
+                                                          style: const TextStyle(fontSize: 12),
+                                                        ),
+                                                        Text(
+                                                          "Date d'expiration : ${l['date_expiration'] ?? ''}",
+                                                          style: const TextStyle(fontSize: 12),
+                                                        ),
+                                                        const SizedBox(height: 10),
+                                                        Center(
+                                                          child: l['qr_code'] != null && l['qr_code'].toString().isNotEmpty
+                                                              ? Image.network(
+                                                                  l['qr_code'],
+                                                                  width: 80,
+                                                                  height: 80,
+                                                                  errorBuilder: (context, error, stackTrace) =>
+                                                                      const Icon(Icons.qr_code, size: 50, color: Colors.grey),
+                                                                )
+                                                              : const Icon(Icons.qr_code, size: 50, color: Colors.grey),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () => Navigator.pop(ctx),
+                                                        child: const Text("Fermer")),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
                           ),
                         ),
                       ),
+                    ),
+                    // Pagination pour les lots
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                            'Page ${_lotPage + 1} / ${((filteredLots.length - 1) / _pageSize).floor() + 1}',
+                            style: const TextStyle(fontSize: 11)),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, size: 16),
+                          onPressed: _lotPage > 0
+                              ? () => setState(() => _lotPage--)
+                              : null,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward, size: 16),
+                          onPressed: lotEnd < filteredLots.length
+                              ? () => setState(() => _lotPage++)
+                              : null,
+                        ),
+                      ],
                     ),
                   ],
                 ),

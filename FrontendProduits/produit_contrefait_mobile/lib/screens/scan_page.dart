@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image/image.dart' as img; // Pour le traitement d'image
 import 'package:zxing2/qrcode.dart' as zxing; // Pour le décodage QR
+import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -18,6 +19,10 @@ class _ScanPageState extends State<ScanPage> {
   bool _isTorchOn = false;
   String? _errorMessage;
   bool _isWebScanning = false;
+
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  QRViewController? controller;
+  String? qrResult;
 
   @override
   void initState() {
@@ -124,6 +129,7 @@ class _ScanPageState extends State<ScanPage> {
   void dispose() {
     _isWebScanning = false;
     _cameraController?.dispose();
+    controller?.dispose();
     super.dispose();
   }
 
@@ -168,11 +174,18 @@ class _ScanPageState extends State<ScanPage> {
       );
     }
 
+    if (kIsWeb) {
+      return _buildWebScanner();
+    } else {
+      return _buildMobileScanner();
+    }
+  }
+
+  Widget _buildWebScanner() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Cadre caméra stylé avec overlay
           Stack(
             alignment: Alignment.center,
             children: [
@@ -184,7 +197,6 @@ class _ScanPageState extends State<ScanPage> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      // ignore: deprecated_member_use
                       color: Colors.black.withOpacity(0.12),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
@@ -202,7 +214,7 @@ class _ScanPageState extends State<ScanPage> {
                       : const Center(child: CircularProgressIndicator()),
                 ),
               ),
-              _buildScannerOverlay(), // <-- Ajoute l'overlay ici
+              _buildScannerOverlay(300),
             ],
           ),
           const SizedBox(height: 28),
@@ -219,11 +231,49 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
-  Widget _buildScannerOverlay() {
+  Widget _buildMobileScanner() {
+    return Column(
+      children: [
+        Expanded(
+          flex: 4,
+          child: QRView(
+            key: qrKey,
+            onQRViewCreated: _onQRViewCreated,
+            overlay: QrScannerOverlayShape(
+              borderColor: Colors.green,
+              borderRadius: 12,
+              borderLength: 30,
+              borderWidth: 10,
+              cutOutSize: MediaQuery.of(context).size.width * 0.8,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 1,
+          child: Center(
+            child: Text(qrResult ?? "Scannez un code QR"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        qrResult = scanData.code;
+      });
+      // Tu peux faire Navigator.pop(context, scanData.code); pour retourner le résultat
+    });
+  }
+
+  // Modifie l'overlay pour prendre la même taille que la caméra
+  Widget _buildScannerOverlay(double size) {
     return Center(
       child: Container(
-        width: 250,
-        height: 250,
+        width: size * 0.83,
+        height: size * 0.83,
         decoration: BoxDecoration(
           border: Border.all(color: Colors.green, width: 2),
           borderRadius: BorderRadius.circular(12),

@@ -112,82 +112,97 @@ class SettingsPage extends StatelessWidget {
 // Nav bar stylée et réutilisable
 Widget _buildCustomBottomNav(BuildContext context, int selectedIndex) {
   return Container(
-    height: 80,
-    margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+    height: 70,
+    margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8), // marge réduite
     decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.85),
-      borderRadius: BorderRadius.circular(30),
+      color: Colors.white.withOpacity(0.92),
+      borderRadius: BorderRadius.circular(22),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF1976D2).withOpacity(0.13),
-          blurRadius: 30,
-          spreadRadius: 2,
-          offset: const Offset(0, 8),
+          color: const Color(0xFF1976D2).withOpacity(0.10),
+          blurRadius: 18,
+          spreadRadius: 1,
+          offset: const Offset(0, 4),
         ),
       ],
       border: Border.all(
-        color: const Color(0xFF4E4FEB).withOpacity(0.08),
-        width: 1.5,
+        color: const Color(0xFF4E4FEB).withOpacity(0.07),
+        width: 1,
       ),
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _navItem(context, Icons.home_rounded, 'Accueil', 0, selectedIndex),
-        _navItem(context, Icons.history_rounded, 'Historique', 1, selectedIndex),
-        _navItem(context, Icons.chat_bubble_rounded, 'Chat', 2, selectedIndex),
-        _navItem(context, Icons.settings_rounded, 'Paramètres', 3, selectedIndex),
+        for (var i = 0; i < 4; i++)
+          _navItem(context, _navIcons[i], _navLabels[i], i, selectedIndex),
       ],
     ),
   );
 }
 
+const List<IconData> _navIcons = [
+  Icons.home_rounded,
+  Icons.history_rounded,
+  Icons.chat_bubble_rounded,
+  Icons.settings_rounded,
+];
+
+const List<String> _navLabels = [
+  'Accueil',
+  'Historique',
+  'Chat',
+  'Outils',
+];
+
 Widget _navItem(BuildContext context, IconData icon, String label, int index, int selectedIndex) {
-  bool isSelected = selectedIndex == index;
-  return GestureDetector(
-    onTap: () {
-      if (index == 0) Navigator.pushNamed(context, '/');
-      if (index == 1) Navigator.pushNamed(context, '/historique');
-      if (index == 2) Navigator.pushNamed(context, '/chat');
-      if (index == 3) Navigator.pushNamed(context, '/settings');
-    },
-    child: AnimatedContainer(
-      duration: 300.ms,
-      curve: Curves.easeOut,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF4E4FEB).withOpacity(0.13) : Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF4E4FEB).withOpacity(0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? const Color(0xFF4E4FEB) : Colors.grey.shade500,
-            size: isSelected ? 30 : 25,
-          ),
-          const SizedBox(height: 4),
-          AnimatedDefaultTextStyle(
-            duration: 300.ms,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: isSelected ? const Color(0xFF4E4FEB) : Colors.grey.shade600,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-              letterSpacing: 0.2,
+  final bool isSelected = selectedIndex == index;
+  return Flexible(
+    fit: FlexFit.tight,
+    child: GestureDetector(
+      onTap: () {
+        if (index == 0) Navigator.pushNamed(context, '/');
+        if (index == 1) Navigator.pushNamed(context, '/historique');
+        if (index == 2) Navigator.pushNamed(context, '/chat');
+        if (index == 3) Navigator.pushNamed(context, '/settings');
+      },
+      child: AnimatedContainer(
+        duration: 300.ms,
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4), // réduit
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF4E4FEB).withOpacity(0.13) : Colors.transparent,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF4E4FEB).withOpacity(0.12),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF4E4FEB) : Colors.grey.shade500,
+              size: isSelected ? 26 : 22, // réduit
             ),
-            child: Text(label),
-          ),
-        ],
+            const SizedBox(height: 2), // réduit
+            AnimatedDefaultTextStyle(
+              duration: 300.ms,
+              style: GoogleFonts.poppins(
+                fontSize: 11, // réduit
+                color: isSelected ? const Color(0xFF4E4FEB) : Colors.grey.shade600,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                letterSpacing: 0.2,
+              ),
+              child: Text(label),
+            ),
+          ],
+        ),
       ),
     ),
   );

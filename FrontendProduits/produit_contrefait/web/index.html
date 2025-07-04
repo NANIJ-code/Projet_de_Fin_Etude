@@ -34,6 +34,16 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    // Solution de repli pour la compatibilité
+    if (!window._flutterPlatformViewRegistry) {
+      window._flutterPlatformViewRegistry = {
+        registerViewFactory: function() {
+          console.log('PlatformViewRegistry initialized');
+        }
+      };
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

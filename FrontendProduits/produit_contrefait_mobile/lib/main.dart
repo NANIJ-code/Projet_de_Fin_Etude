@@ -180,6 +180,7 @@ class _HomeScanPageState extends State<HomeScanPage> with TickerProviderStateMix
                           ).createShader(bounds),
                           child: Text(
                             "Scanner un produit",
+                            textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
@@ -243,7 +244,7 @@ class _HomeScanPageState extends State<HomeScanPage> with TickerProviderStateMix
                                   const Icon(Icons.camera_alt, size: 28, color: Colors.white),
                                   const SizedBox(width: 12),
                                   Text(
-                                    "Scanner maintenant",
+                                    "Scan maintenant",
                                     style: GoogleFonts.poppins(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w600,
@@ -317,7 +318,7 @@ class _HomeScanPageState extends State<HomeScanPage> with TickerProviderStateMix
           _buildNavItem(Icons.home, 'Accueil', 0),
           _buildNavItem(Icons.history, 'Historique', 1),
           _buildNavItem(Icons.chat_bubble_outline, 'Chat', 2), // Ajouté
-          _buildNavItem(Icons.settings, 'Paramètres', 3),
+          _buildNavItem(Icons.settings, 'Outils', 3),
         ],
       ),
     );

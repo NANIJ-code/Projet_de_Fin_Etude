@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image/image.dart' as img;
 import 'package:zxing2/qrcode.dart' as zxing;
+import 'qr_scan_page.dart';
 
 // Sidebar harmonisée avec "Transaction"
 class ResponsiveSidebar extends StatefulWidget {
@@ -71,7 +72,8 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                   color: const Color(0xFF1A6FC9).withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.security, color: Color(0xFF1A6FC9), size: 28),
+                child: const Icon(Icons.security,
+                    color: Color(0xFF1A6FC9), size: 28),
               ),
             ),
             if (_isHovered || isMobile)
@@ -96,7 +98,8 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                 onTap: () => widget.onItemSelected(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                   padding: EdgeInsets.symmetric(
                     vertical: 2,
                     horizontal: _isHovered || isMobile ? 8 : 0,
@@ -138,8 +141,9 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                               color: isActive
                                   ? const Color(0xFF1A6FC9)
                                   : const Color(0xFFB3B8C8),
-                              fontWeight:
-                                  isActive ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                               fontSize: 15,
                             ),
                           ),
@@ -165,7 +169,8 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                         color: const Color(0xFF1A6FC9).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.person, color: Color(0xFF1A6FC9), size: 26),
+                      child: const Icon(Icons.person,
+                          color: Color(0xFF1A6FC9), size: 26),
                     ),
                     if (_isHovered || isMobile)
                       Padding(
@@ -248,13 +253,6 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  void _startScan() async {
-    // Simule un scan (remplace par ta logique réelle)
-    setState(() => _scanResult = null);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _scanResult =
-        "Produit : Paracétamol 500mg\nLot : 2024A\nStatut : Authentique");
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +358,12 @@ class _ScanScreenState extends State<ScanScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 32, vertical: 16),
                               ),
-                              onPressed: _startScan,
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (_) => const QrScanOrImportPage()),
+                                );
+                              },
                               icon: const Icon(Icons.camera_alt),
                               label: const Text("Démarrer le scan"),
                             ),
@@ -528,7 +531,8 @@ class _ProductScanPageState extends State<ProductScanPage> {
       if (image == null) return null;
 
       // Obtenir les bytes RGBA (ou RGB selon la version)
-      final pixels = image.getBytes(); // ou image.getBytes(order: img.ChannelOrder.rgba);
+      final pixels =
+          image.getBytes(); // ou image.getBytes(order: img.ChannelOrder.rgba);
 
       final luminanceSource = zxing.RGBLuminanceSource(
         image.width,
@@ -537,7 +541,8 @@ class _ProductScanPageState extends State<ProductScanPage> {
       );
 
       final reader = zxing.QRCodeReader();
-      final result = reader.decode(zxing.BinaryBitmap(zxing.HybridBinarizer(luminanceSource)));
+      final result = reader
+          .decode(zxing.BinaryBitmap(zxing.HybridBinarizer(luminanceSource)));
 
       return result.text;
     } catch (e) {
@@ -573,11 +578,13 @@ class _ProductScanPageState extends State<ProductScanPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Scanner un produit', style: TextStyle(color: Color(0xFF16213E))),
+        title: const Text('Scanner un produit',
+            style: TextStyle(color: Color(0xFF16213E))),
         iconTheme: const IconThemeData(color: Color(0xFF16213E)),
         actions: [
           IconButton(
-            icon: Icon(_isTorchOn ? Icons.flash_on : Icons.flash_off, color: const Color(0xFF16213E)),
+            icon: Icon(_isTorchOn ? Icons.flash_on : Icons.flash_off,
+                color: const Color(0xFF16213E)),
             onPressed: _toggleTorch,
           ),
         ],
@@ -635,7 +642,8 @@ class _ProductScanPageState extends State<ProductScanPage> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: _cameraController != null && _cameraController!.value.isInitialized
+                  child: _cameraController != null &&
+                          _cameraController!.value.isInitialized
                       ? CameraPreview(_cameraController!)
                       : const Center(child: CircularProgressIndicator()),
                 ),
@@ -758,7 +766,8 @@ class _ScanProduitPageState extends State<ScanProduitPage> {
         pixels.buffer.asInt32List(),
       );
       final reader = zxing.QRCodeReader();
-      final result = reader.decode(zxing.BinaryBitmap(zxing.HybridBinarizer(luminanceSource)));
+      final result = reader
+          .decode(zxing.BinaryBitmap(zxing.HybridBinarizer(luminanceSource)));
       return result.text;
     } catch (_) {
       return null;
@@ -780,7 +789,9 @@ class _ScanProduitPageState extends State<ScanProduitPage> {
             ),
             const SizedBox(height: 24),
             if (_isLoading) const CircularProgressIndicator(),
-            if (_cameraController != null && _cameraController!.value.isInitialized && _isScanning)
+            if (_cameraController != null &&
+                _cameraController!.value.isInitialized &&
+                _isScanning)
               AspectRatio(
                 aspectRatio: _cameraController!.value.aspectRatio,
                 child: CameraPreview(_cameraController!),
@@ -789,9 +800,12 @@ class _ScanProduitPageState extends State<ScanProduitPage> {
             if (_scanResult != null)
               Column(
                 children: [
-                  const Text("Résultat du scan :", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text("Résultat du scan :",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text(_scanResult!, style: const TextStyle(fontSize: 18, color: Colors.green)),
+                  Text(_scanResult!,
+                      style:
+                          const TextStyle(fontSize: 18, color: Colors.green)),
                 ],
               ),
           ],

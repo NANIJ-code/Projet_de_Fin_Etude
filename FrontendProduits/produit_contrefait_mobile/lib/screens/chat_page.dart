@@ -98,95 +98,90 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           Flexible(
-            child:
-                Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: isUser
-                            ? const LinearGradient(
-                                colors: [Color(0xFF4E4FEB), Color(0xFF1A1A2E)],
-                              )
-                            : const LinearGradient(
-                                colors: [Color(0xFFF1F5FB), Color(0xFFE3E8F0)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                        borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(20),
-                          topRight: const Radius.circular(20),
-                          bottomLeft: Radius.circular(isUser ? 20 : 6),
-                          bottomRight: Radius.circular(isUser ? 6 : 20),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: isUser
+                    ? const LinearGradient(
+                        colors: [Color(0xFF4E4FEB), Color(0xFF1A1A2E)],
+                      )
+                    : const LinearGradient(
+                        colors: [Color(0xFFF1F5FB), Color(0xFFE3E8F0)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isUser ? 20 : 6),
+                  bottomRight: Radius.circular(isUser ? 6 : 20),
+                ),
+                border: isUser
+                    ? null
+                    : Border.all(
+                        color: const Color(0xFF4E4FEB).withOpacity(0.18),
+                        width: 1.5,
+                      ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isUser
+                        ? const Color(0xFF4E4FEB).withOpacity(0.13)
+                        : const Color(0xFF1A1A2E).withOpacity(0.10),
+                    blurRadius: isUser ? 10 : 16,
+                    offset: Offset(0, isUser ? 4 : 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: isUser
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  if (!isUser)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Assistant Pavlix",
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF4E4FEB),
+                            letterSpacing: 0.2,
+                          ),
                         ),
-                        border: isUser
-                            ? null
-                            : Border.all(
-                                color: const Color(
-                                  0xFF4E4FEB,
-                                ).withOpacity(0.18),
-                                width: 1.5,
-                              ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isUser
-                                ? const Color(0xFF4E4FEB).withOpacity(0.13)
-                                : const Color(0xFF1A1A2E).withOpacity(0.10),
-                            blurRadius: isUser ? 10 : 16,
-                            offset: Offset(0, isUser ? 4 : 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: isUser
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          if (!isUser)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "Assistant Pavlix",
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF4E4FEB),
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  Icons.verified,
-                                  color: Color(0xFF4E4FEB),
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          if (!isUser) const SizedBox(height: 6),
-                          Text(
-                            msg.text,
-                            style: GoogleFonts.montserrat(
-                              color: isUser
-                                  ? Colors.white
-                                  : const Color(0xFF1A1A2E),
-                              fontSize: 15,
-                              fontWeight: isUser
-                                  ? FontWeight.w500
-                                  : FontWeight.w400,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 10,
-                              color: isUser ? Colors.white70 : Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    .animate(delay: 100.ms)
-                    .slideX(begin: isUser ? 0.2 : -0.2, curve: Curves.easeOut),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.verified,
+                          color: Color(0xFF4E4FEB),
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  if (!isUser) const SizedBox(height: 6),
+                  Text(
+                    msg.text,
+                    style: GoogleFonts.montserrat(
+                      color: isUser
+                          ? Colors.white
+                          : const Color(0xFF1A1A2E),
+                      fontSize: 15,
+                      fontWeight: isUser
+                          ? FontWeight.w500
+                          : FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 10,
+                      color: isUser ? Colors.white70 : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ).animate(delay: 100.ms).slideX(begin: isUser ? 0.2 : -0.2, curve: Curves.easeOut),
           ),
         ],
       ),
@@ -350,7 +345,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 }
 
-// Ajoute cette fonction dans chat_page.dart (ou importe-la depuis main.dart)
+// Barre de navigation personnalisée réutilisable
 Widget _buildCustomBottomNav(BuildContext context, int selectedIndex) {
   return Container(
     height: 80,
@@ -372,7 +367,7 @@ Widget _buildCustomBottomNav(BuildContext context, int selectedIndex) {
         _navItem(context, Icons.home, 'Accueil', 0, selectedIndex),
         _navItem(context, Icons.history, 'Historique', 1, selectedIndex),
         _navItem(context, Icons.chat_bubble_outline, 'Chat', 2, selectedIndex),
-        _navItem(context, Icons.settings, 'Paramètres', 3, selectedIndex),
+        _navItem(context, Icons.settings, 'Outils', 3, selectedIndex),
       ],
     ),
   );

@@ -1,209 +1,22 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously, unused_import, unused_element, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import '../settings/settings_screen.dart';
+import '../../services/transaction_service.dart';
+import 'ligne_transaction_screen.dart';// Pour ResponsiveSidebar
 
-// --- Sidebar centrée et stylée ---
-class ResponsiveSidebar extends StatefulWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onItemSelected;
-  const ResponsiveSidebar({
-    super.key,
-    required this.selectedIndex,
-    required this.onItemSelected,
-  });
-
-  @override
-  State<ResponsiveSidebar> createState() => _ResponsiveSidebarState();
+Future<Map<String, String>> getAuthHeaders() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt_token');
+  return {
+    'Content-Type': 'application/json',
+    if (token != null) 'Authorization': 'Bearer $token',
+  };
 }
 
-class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
-  bool _isHovered = false;
-
-  final List<_NavItem> navItems = const [
-    _NavItem(Icons.space_dashboard_outlined, "Dashboard", '/dashboard'),
-    _NavItem(Icons.qr_code_2_rounded, "Scan", '/scan'),
-    _NavItem(Icons.account_circle_outlined, "Utilisateur", '/user'),
-    _NavItem(Icons.inventory_2_outlined, "Produits", '/product'),
-    _NavItem(Icons.swap_horiz, "Transaction", '/transaction'),
-    _NavItem(Icons.notifications_active_outlined, "Alertes", '/alerts'),
-    _NavItem(Icons.settings, "Paramètres", '/settings'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-    final sidebarWidth = _isHovered || isMobile ? 220.0 : 80.0;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: sidebarWidth,
-        constraints: BoxConstraints(maxWidth: sidebarWidth),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blueGrey.withOpacity(0.10),
-              blurRadius: 30,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 28),
-            Center(
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A6FC9).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.security,
-                    color: Color(0xFF1A6FC9), size: 28),
-              ),
-            ),
-            if (_isHovered || isMobile)
-              Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 8),
-                child: Text(
-                  "SecureScan",
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 20,
-                    color: const Color(0xFF1A6FC9),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 18),
-            ...List.generate(navItems.length, (i) {
-              final item = navItems[i];
-              final isActive = widget.selectedIndex == i;
-              return InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () => widget.onItemSelected(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 2,
-                    horizontal: _isHovered || isMobile ? 8 : 0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? const Color(0xFF1A6FC9).withOpacity(0.13)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? const Color(0xFF1A6FC9).withOpacity(0.18)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          item.icon,
-                          color: isActive
-                              ? const Color(0xFF1A6FC9)
-                              : const Color(0xFFB3B8C8),
-                          size: 26,
-                        ),
-                      ),
-                      if (_isHovered || isMobile)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16),
-                          child: Text(
-                            item.label,
-                            style: GoogleFonts.montserrat(
-                              color: isActive
-                                  ? const Color(0xFF1A6FC9)
-                                  : const Color(0xFFB3B8C8),
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const Spacer(),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 18),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A6FC9).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.person,
-                          color: Color(0xFF1A6FC9), size: 26),
-                    ),
-                    if (_isHovered || isMobile)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Admin",
-                              style: GoogleFonts.montserrat(
-                                color: const Color(0xFF1A6FC9),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                            ),
-                            Text(
-                              "Administrateur",
-                              style: GoogleFonts.montserrat(
-                                color: Colors.blueGrey,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const _NavItem(this.icon, this.label, this.route);
-}
-
-// --- Page Transaction ---
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});
 
@@ -213,52 +26,133 @@ class TransactionScreen extends StatefulWidget {
 
 class _TransactionScreenState extends State<TransactionScreen> {
   int selectedIndex = 4;
-
   String search = '';
 
-  // Simulations de données pour les selects
-  final List<String> emetteurs = ['Alice', 'Bob', 'Charlie'];
-  final List<String> destinataires = ['David', 'Eve', 'Frank'];
-  final List<String> types = ['Vente', 'Achat', 'Transfert'];
-  final List<String> produitsList = ['Paracétamol', 'Ibuprofène', 'Aspirine'];
-  final List<String> lotsList = ['Lot A', 'Lot B', 'Lot C'];
-
-  List<Map<String, String>> transactions = [
-    {
-      'emetteur': 'Alice',
-      'destinataire': 'Bob',
-      'type': 'Vente',
-      'produits': 'Paracétamol (Lot A), Ibuprofène (Lot B)'
-    },
-    {
-      'emetteur': 'Charlie',
-      'destinataire': 'David',
-      'type': 'Achat',
-      'produits': 'Aspirine (Lot C)'
-    },
-  ];
+  List<Map<String, dynamic>> transactions = [];
+  List<Map<String, dynamic>> utilisateurs = [];
+  List<String> types = ['B2B', 'B2C'];
+  List<Map<String, dynamic>> produitsList = [];
+  List<Map<String, dynamic>> lotsList = [];
 
   final _formKey = GlobalKey<FormState>();
-  String? emetteur;
-  String? destinataire;
+  int? emetteurId;
+  int? destinataireId;
   String? typeTransaction;
-  List<Map<String, String?>> produits = [
-    {'produit': null, 'lot': null}
-  ];
+  List<Map<String, String?>> produits = [];
 
-  void _openAddTransactionDialog() {
+  Map<String, dynamic>? utilisateurConnecte;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+    _loadAllData();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getInt('user_id');
+    if (utilisateurs.isNotEmpty && currentUserId != null) {
+      setState(() {
+        utilisateurConnecte = utilisateurs.firstWhere(
+          (u) => parseIntOrNull(u['id']) == currentUserId,
+          orElse: () => {},
+        );
+      });
+    }
+  }
+
+  Future<void> _loadAllData() async {
+    await Future.wait([
+      _loadTransactions(),
+      _loadUtilisateurs(),
+      _loadProduits(),
+      _loadLots(),
+    ]);
+  }
+
+  Future<void> _loadTransactions() async {
+    final data = await TransactionService.fetchTransactions();
+    setState(() => transactions = List<Map<String, dynamic>>.from(data));
+  }
+
+  Future<void> _loadUtilisateurs() async {
+    final data = await TransactionService.fetchUtilisateurs();
+    print('API utilisateurs: $data');
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getInt('user_id');
     setState(() {
-      emetteur = null;
-      destinataire = null;
+      utilisateurs = List<Map<String, dynamic>>.from(data)
+          .where((u) => parseIntOrNull(u['id']) != null)
+          .toList();
+      utilisateurConnecte = utilisateurs.firstWhere(
+        (u) => parseIntOrNull(u['id']) == currentUserId,
+        orElse: () => {},
+      );
+      emetteurId = currentUserId;
+    });
+  }
+
+  Future<void> _loadProduits() async {
+    final data = await TransactionService.fetchProduits();
+    setState(() {
+      produitsList = List<Map<String, dynamic>>.from(data)
+          .where((e) => parseIntOrNull(e['id']) != null)
+          .toList();
+      print('Loaded produitsList: $produitsList');
+    });
+  }
+
+  Future<void> _loadLots() async {
+    final data = await TransactionService.fetchLots();
+    setState(() {
+      lotsList = List<Map<String, dynamic>>.from(data);
+      print('Loaded lotsList: $lotsList');
+    });
+  }
+
+  void _openAddOrEditTransactionDialog({Map<String, dynamic>? transaction}) {
+    if (transaction != null) {
+      emetteurId = parseIntOrNull(transaction['emetteur']);
+      destinataireId = parseIntOrNull(transaction['destinataire']);
+      typeTransaction = transaction['type_transaction'];
+      produits = (transaction['lignes'] as List? ?? [])
+          .map<Map<String, String?>>((l) => {
+                'produit': parseIntOrNull(l['produit'])?.toString(),
+                'lot': l['lot']?.toString(), // Lot peut être une chaîne
+              })
+          .where((p) => p['produit'] != null && p['lot'] != null)
+          .toList();
+      if (produits.isEmpty) {
+        produits = [
+          {
+            'produit': produitsList.isNotEmpty
+                ? produitsList.first['id'].toString()
+                : null,
+            'lot': lotsList.isNotEmpty ? lotsList.first['numero_lot'] : null,
+          }
+        ];
+      }
+    } else {
+      emetteurId = utilisateurConnecte != null
+          ? parseIntOrNull(utilisateurConnecte!['id'])
+          : null;
+      destinataireId = null;
       typeTransaction = null;
       produits = [
-        {'produit': null, 'lot': null}
+        {
+          'produit': produitsList.isNotEmpty
+              ? produitsList.first['id'].toString()
+              : null,
+          'lot': lotsList.isNotEmpty ? lotsList.first['numero_lot'] : null,
+        }
       ];
-    });
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        contentPadding: const EdgeInsets.all(24),
+        contentPadding: const EdgeInsets.all(16), // Réduit le padding
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: SizedBox(
           width: 500,
@@ -269,111 +163,167 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Ligne 1 : Emetteur & Destinataire
+                    // Émetteur & Destinataire
                     Row(
                       children: [
                         Expanded(
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              labelText: "Émetteur",
-                            ),
-                            value: emetteur,
-                            items: emetteurs
-                                .map((e) => DropdownMenuItem(
-                                      value: e,
-                                      child: Text(e),
-                                    ))
-                                .toList(),
-                            onChanged: (v) => setModalState(() => emetteur = v),
-                            validator: (v) => v == null ? "Champ requis" : null,
+                          flex: 1,
+                          child: TextFormField(
+                            enabled: false,
+                            initialValue: (utilisateurConnecte != null &&
+                                    utilisateurConnecte!.isNotEmpty)
+                                ? '${utilisateurConnecte!['username']} (${utilisateurConnecte!['role']}, ${utilisateurConnecte!['ville']})'
+                                : 'Utilisateur non trouvé',
+                            decoration:
+                                const InputDecoration(labelText: "Émetteur"),
+                            style: const TextStyle(
+                                fontSize: 14), // Réduit la taille du texte
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 8),
                         Expanded(
-                          child: DropdownButtonFormField<String>(
+                          flex: 1,
+                          child: DropdownButtonFormField<int>(
                             decoration: const InputDecoration(
                               labelText: "Destinataire",
+                              labelStyle: TextStyle(fontSize: 14),
                             ),
-                            value: destinataire,
-                            items: destinataires
-                                .map((e) => DropdownMenuItem(
-                                      value: e,
-                                      child: Text(e),
+                            value: destinataireId,
+                            items: utilisateurs
+                                .where((u) =>
+                                    parseIntOrNull(u['id']) != null &&
+                                    parseIntOrNull(u['id']) != emetteurId)
+                                .map((u) => DropdownMenuItem<int>(
+                                      value: parseIntOrNull(u['id']),
+                                      child: Text(
+                                        '${u['username']} (${u['role']}, ${u['ville']})',
+                                        style: const TextStyle(fontSize: 14),
+                                        overflow: TextOverflow
+                                            .ellipsis, // Gère les textes longs
+                                      ),
                                     ))
                                 .toList(),
                             onChanged: (v) =>
-                                setModalState(() => destinataire = v),
+                                setModalState(() => destinataireId = v),
                             validator: (v) => v == null ? "Champ requis" : null,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
-                    // Ligne 2 : Type de transaction centré
-                    Center(
-                      child: SizedBox(
-                        width: 250,
-                        child: DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(
-                            labelText: "Type de transaction",
-                          ),
-                          value: typeTransaction,
-                          items: types
-                              .map((e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e),
-                                  ))
-                              .toList(),
-                          onChanged: (v) =>
-                              setModalState(() => typeTransaction = v),
-                          validator: (v) => v == null ? "Champ requis" : null,
-                        ),
+                    const SizedBox(height: 12),
+                    // Type de transaction
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: "Type de transaction",
+                        labelStyle: TextStyle(fontSize: 14),
                       ),
+                      value: typeTransaction,
+                      items: types
+                          .map((e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e,
+                                    style: const TextStyle(fontSize: 14)),
+                              ))
+                          .toList(),
+                      onChanged: (v) =>
+                          setModalState(() => typeTransaction = v),
+                      validator: (v) => v == null ? "Champ requis" : null,
                     ),
-                    const SizedBox(height: 18),
-                    // Ligne 3+ : Produit & Lot produit (dynamique)
+                    const SizedBox(height: 12),
+                    // Produits & Lots
                     Column(
                       children: [
                         ...List.generate(produits.length, (i) {
+                          int? produitValue =
+                              parseIntOrNull(produits[i]['produit']);
+                          if (produitValue == null ||
+                              !produitsList
+                                  .any((e) => e['id'] == produitValue)) {
+                            produitValue = produitsList.isNotEmpty
+                                ? produitsList.first['id'] as int?
+                                : null;
+                            produits[i]['produit'] = produitValue?.toString();
+                          }
+                          String? lotValue = produits[i]['lot'];
+                          if (lotValue == null ||
+                              !lotsList
+                                  .any((e) => e['numero_lot'] == lotValue)) {
+                            lotValue = lotsList.isNotEmpty
+                                ? lotsList.first['numero_lot'] as String?
+                                : null;
+                            produits[i]['lot'] = lotValue;
+                          }
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.only(bottom: 8),
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: DropdownButtonFormField<String>(
+                                  flex: 1,
+                                  child: DropdownButtonFormField<int>(
                                     decoration: const InputDecoration(
                                       labelText: "Produit",
+                                      labelStyle: TextStyle(fontSize: 14),
                                     ),
-                                    value: produits[i]['produit'],
-                                    items: produitsList
-                                        .map((e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Text(e),
-                                            ))
-                                        .toList(),
-                                    onChanged: (v) => setModalState(
-                                        () => produits[i]['produit'] = v),
+                                    value: produitsList.isNotEmpty &&
+                                            produitValue != null &&
+                                            produitsList.any(
+                                                (e) => e['id'] == produitValue)
+                                        ? produitValue
+                                        : null,
+                                    items: produitsList.isNotEmpty
+                                        ? produitsList
+                                            .where((e) => e['id'] is int)
+                                            .map((e) => DropdownMenuItem<int>(
+                                                  value: e['id'] as int,
+                                                  child: Text(
+                                                    e['nom']?.toString() ??
+                                                        'N/A',
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ))
+                                            .toList()
+                                        : [],
+                                    onChanged: produitsList.isEmpty
+                                        ? null
+                                        : (v) => setModalState(() => produits[i]
+                                            ['produit'] = v?.toString()),
                                     validator: (v) =>
-                                        v == null ? "Champ requis" : null,
+                                        v == null && produitsList.isNotEmpty
+                                            ? "Champ requis"
+                                            : null,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Expanded(
+                                  flex: 1,
                                   child: DropdownButtonFormField<String>(
                                     decoration: const InputDecoration(
                                       labelText: "Lot produit",
+                                      labelStyle: TextStyle(fontSize: 14),
                                     ),
-                                    value: produits[i]['lot'],
+                                    value: lotValue,
                                     items: lotsList
-                                        .map((e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Text(e),
+                                        .map((e) => DropdownMenuItem<String>(
+                                              value: e['numero_lot'],
+                                              child: Text(
+                                                e['numero_lot'],
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ))
                                         .toList(),
-                                    onChanged: (v) => setModalState(
-                                        () => produits[i]['lot'] = v),
+                                    onChanged: lotsList.isEmpty
+                                        ? null
+                                        : (v) => setModalState(
+                                            () => produits[i]['lot'] = v),
                                     validator: (v) =>
-                                        v == null ? "Champ requis" : null,
+                                        v == null && lotsList.isNotEmpty
+                                            ? "Champ requis"
+                                            : null,
                                   ),
                                 ),
                                 if (i == produits.length - 1)
@@ -381,12 +331,25 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                     icon: const Icon(Icons.add_circle,
                                         color: Colors.green),
                                     tooltip: "Ajouter une ligne",
-                                    onPressed: () {
-                                      setModalState(() {
-                                        produits.add(
-                                            {'produit': null, 'lot': null});
-                                      });
-                                    },
+                                    onPressed:
+                                        produitsList.isEmpty || lotsList.isEmpty
+                                            ? null
+                                            : () {
+                                                setModalState(() {
+                                                  produits.add({
+                                                    'produit':
+                                                        produitsList.isNotEmpty
+                                                            ? produitsList
+                                                                .first['id']
+                                                                .toString()
+                                                            : null,
+                                                    'lot': lotsList.isNotEmpty
+                                                        ? lotsList
+                                                            .first['numero_lot']
+                                                        : null,
+                                                  });
+                                                });
+                                              },
                                   ),
                                 if (produits.length > 1)
                                   IconButton(
@@ -405,28 +368,76 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         }),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     // Bouton valider
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState?.validate() ?? false) {
-                            setState(() {
-                              transactions.add({
-                                'emetteur': emetteur ?? '',
-                                'destinataire': destinataire ?? '',
-                                'type': typeTransaction ?? '',
-                                'produits': produits
-                                    .map((p) =>
-                                        "${p['produit']} (Lot ${p['lot']})")
-                                    .join(', ')
-                              });
-                            });
-                            Navigator.of(context).pop();
+                            final validProduits = produits
+                                .where((l) =>
+                                    (l['produit'] ?? '')
+                                        .toString()
+                                        .isNotEmpty &&
+                                    (l['lot'] ?? '').toString().isNotEmpty)
+                                .toList();
+
+                            if (validProduits.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      "Au moins un produit et un lot sont requis"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final data = {
+                              "destinataire": destinataireId,
+                              "type_transaction": typeTransaction,
+                              "lignes": validProduits.map((l) {
+                                // inutile de chercher l'id, on envoie le numero_lot
+                                return {
+                                  "produit": int.parse(l['produit']!),
+                                  "lots": [l['lot']],
+                                };
+                              }).toList(),
+                            };
+                            bool success;
+                            if (transaction == null) {
+                              success =
+                                  await TransactionService.createTransaction(
+                                      data);
+                            } else {
+                              success =
+                                  await TransactionService.updateTransaction(
+                                      transaction['id'], data);
+                            }
+                            if (success) {
+                              Navigator.of(context).pop();
+                              await _loadTransactions();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(transaction == null
+                                      ? "Transaction créée !"
+                                      : "Transaction modifiée !"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Erreur lors de l'opération"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
                           }
                         },
-                        child: const Text("Valider"),
+                        child:
+                            Text(transaction == null ? "Valider" : "Modifier"),
                       ),
                     ),
                   ],
@@ -439,183 +450,253 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
-  void _onSidebarItemSelected(int i) {
-    setState(() => selectedIndex = i);
-    var navItems = const [
-      _NavItem(Icons.space_dashboard_outlined, "Dashboard", '/dashboard'),
-      _NavItem(Icons.qr_code_2_rounded, "Scan", '/scan'),
-      _NavItem(Icons.account_circle_outlined, "Utilisateur", '/user'),
-      _NavItem(Icons.inventory_2_outlined, "Produits", '/product'),
-      _NavItem(Icons.swap_horiz, "Transaction", '/transaction'),
-      _NavItem(Icons.notifications_active_outlined, "Alertes", '/alerts'),
-      _NavItem(Icons.settings, "Paramètres", '/settings'),
-    ];
-    Navigator.of(context).pushReplacementNamed(navItems[i].route);
+  void _deleteTransaction(int id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Confirmation"),
+        content: const Text("Supprimer cette transaction ?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Annuler"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Supprimer"),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      final success = await TransactionService.deleteTransaction(id);
+      if (success) {
+        await _loadTransactions();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Transaction supprimée"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Erreur suppression"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getUtilisateurLabel(dynamic utilisateurId) {
+    final user = utilisateurs.firstWhere(
+      (u) => u['id'] == utilisateurId,
+      orElse: () => {},
+    );
+    if (user.isEmpty) return utilisateurId?.toString() ?? '';
+    return '${user['username']} (${user['role']}, ${user['ville']})';
+  }
+
+  String _getProductName(dynamic productId) {
+    final product = produitsList.firstWhere(
+      (p) => p['id'] == productId,
+      orElse: () => {},
+    );
+    return product.isNotEmpty ? product['nom'] : 'Inconnu';
+  }
+
+  Widget _buildMainContent(BuildContext context) {
+    final filteredTransactions = transactions.where((t) {
+      final q = search.toLowerCase();
+      return t.values.any((v) => v.toString().toLowerCase().contains(q));
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Barre de recherche stylisée et moins longue
+        Row(
+          children: [
+            SizedBox(
+              width: 320,
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: "Rechercher une transaction...",
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                onChanged: (v) => setState(() => search = v),
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (produitsList.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Aucun produit disponible. Veuillez charger les produits."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (lotsList.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Aucun lot disponible. Veuillez charger les lots."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                _openAddOrEditTransactionDialog();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text("Ajouter"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A6FC9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Expanded(
+          child: Card(
+            elevation: 5,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: filteredTransactions.isEmpty
+                  ? const Center(child: Text("Aucune transaction trouvée"))
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(const Color(0xFF1A6FC9)),
+                        headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        columns: const [
+                          DataColumn(label: Text("Émetteur", style: TextStyle(color: Colors.white))),
+                          DataColumn(label: Text("Destinataire", style: TextStyle(color: Colors.white))),
+                          DataColumn(label: Text("Type", style: TextStyle(color: Colors.white))),
+                          DataColumn(label: Text("Produits & Lots", style: TextStyle(color: Colors.white))),
+                          DataColumn(label: Text("Actions", style: TextStyle(color: Colors.white))),
+                        ],
+                        rows: List<DataRow>.generate(
+                          filteredTransactions.length,
+                          (index) {
+                            final t = filteredTransactions[index];
+                            final isEven = index % 2 == 0;
+                            return DataRow(
+                              color: WidgetStateProperty.all(isEven ? Colors.white : const Color(0xFFE3F0FB)),
+                              cells: [
+                                DataCell(Text(_getUtilisateurLabel(t['emetteur']), style: const TextStyle(fontSize: 15))),
+                                DataCell(Text(_getUtilisateurLabel(t['destinataire']), style: const TextStyle(fontSize: 15))),
+                                DataCell(Text(t['type_transaction'] ?? '', style: const TextStyle(fontSize: 15))),
+                                DataCell(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: (t['lignes'] as List? ?? [])
+                                        .map<Widget>((l) => Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 2),
+                                              child: Text(
+                                                "${_getProductName(l['produit'])} (Lot: ${l['lot']})",
+                                                style: const TextStyle(fontSize: 14),
+                                              ),
+                                            ))
+                                        .toList(),
+                                  ),
+                                ),
+                                DataCell(Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blue),
+                                      onPressed: () => _openAddOrEditTransactionDialog(transaction: t),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () => _deleteTransaction(t['id']),
+                                    ),
+                                  ],
+                                )),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-    final filteredTransactions = transactions.where((t) {
-      final q = search.toLowerCase();
-      return t.values.any((v) => v.toLowerCase().contains(q));
-    }).toList();
-
+    final isMobile = MediaQuery.of(context).size.width < 900;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
       body: Row(
         children: [
-          ResponsiveSidebar(
-            selectedIndex: selectedIndex,
-            onItemSelected: _onSidebarItemSelected,
-          ),
+          if (!isMobile)
+            ResponsiveSidebar(
+              selectedIndex: 4, // 4 pour "Transaction"
+              onItemSelected: (i) {
+                setState(() => selectedIndex = i);
+                switch (i) {
+                  case 0:
+                    Navigator.of(context).pushReplacementNamed('/dashboard');
+                    break;
+                  case 1:
+                    Navigator.of(context).pushReplacementNamed('/scan');
+                    break;
+                  case 2:
+                    Navigator.of(context).pushReplacementNamed('/user');
+                    break;
+                  case 3:
+                    Navigator.of(context).pushReplacementNamed('/product');
+                    break;
+                  case 4:
+                    // Déjà sur la page transaction
+                    break;
+                  case 5:
+                    Navigator.of(context).pushReplacementNamed('/alerts');
+                    break;
+                  case 6:
+                    Navigator.of(context).pushReplacementNamed('/settings');
+                    break;
+                }
+              },
+            ),
+          // Main content
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 12.0 : 32.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header + bouton ajouter
-                  Row(
-                    children: [
-                      Text(
-                        "Gestion des Transactions",
-                        style: GoogleFonts.playfairDisplay(
-                          color: const Color(0xFF1A6FC9),
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4E4FEB),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: _openAddTransactionDialog,
-                        icon: const Icon(Icons.add),
-                        label: const Text("Ajouter une transaction"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Champ de recherche
-                  SizedBox(
-                    width: 350,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "Rechercher une transaction...",
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF1F1F3),
-                      ),
-                      onChanged: (v) => setState(() => search = v),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  // Tableau stylé et plus long
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minWidth: 900),
-                          child: DataTable(
-                            columnSpacing: 32,
-                            horizontalMargin: 18,
-                            headingRowColor:
-                                WidgetStateProperty.resolveWith<Color?>(
-                              (states) =>
-                                  const Color(0xFF4E4FEB).withOpacity(0.08),
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color:
-                                      const Color(0xFF4E4FEB).withOpacity(0.15),
-                                  width: 1.5),
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            columns: [
-                              DataColumn(
-                                label: Text("Émetteur",
-                                    style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16)),
-                              ),
-                              DataColumn(
-                                label: Text("Destinataire",
-                                    style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16)),
-                              ),
-                              DataColumn(
-                                label: Text("Type",
-                                    style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16)),
-                              ),
-                              DataColumn(
-                                label: Text("Produits",
-                                    style: GoogleFonts.montserrat(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16)),
-                              ),
-                            ],
-                            rows: filteredTransactions
-                                .map((t) => DataRow(
-                                      cells: [
-                                        DataCell(Text(t['emetteur'] ?? '',
-                                            style: GoogleFonts.montserrat(
-                                                fontSize: 15))),
-                                        DataCell(Text(t['destinataire'] ?? '',
-                                            style: GoogleFonts.montserrat(
-                                                fontSize: 15))),
-                                        DataCell(Text(t['type'] ?? '',
-                                            style: GoogleFonts.montserrat(
-                                                fontSize: 15))),
-                                        DataCell(Text(t['produits'] ?? '',
-                                            style: GoogleFonts.montserrat(
-                                                fontSize: 15))),
-                                      ],
-                                    ))
-                                .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.all(24.0),
+              child: _buildMainContent(context),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+int? parseIntOrNull(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is String && v.isNotEmpty) {
+    // Supprimer les caractères non numériques pour tenter un parsing
+    final numericPart = v.replaceAll(RegExp(r'[^0-9]'), '');
+    final result = int.tryParse(numericPart);
+    if (result == null && v != '') {
+      print('Failed to parse int from: $v (numeric part: $numericPart)');
+    }
+    return result;
+  }
+  print('Invalid value for parsing: $v');
+  return null;
 }
