@@ -1085,329 +1085,289 @@ class _ProductScreenState extends State<ProductScreen> {
                           child: DataTable(
                             columnSpacing: 25,
                             horizontalMargin: 20,
-                            headingRowColor:
-                                WidgetStateProperty.resolveWith<Color?>(
-                                    (states) =>
-                                        const Color(0xFF4E4FEB).withOpacity(0.08)),
+                            headingRowColor: WidgetStateProperty.resolveWith<Color?>(
+                              (states) => const Color(0xFF4E4FEB).withOpacity(0.08),
+                            ),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: const Color(0xFF4E4FEB).withOpacity(0.15),
-                                  width: 1),
+                                color: const Color(0xFF4E4FEB).withOpacity(0.15),
+                                width: 1,
+                              ),
                               color: Colors.white,
                             ),
                             columns: [
-                              DataColumn(
-                                  label: Text("N° Lot",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
-                              DataColumn(
-                                  label: Text("Produit",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
-                              DataColumn(
-                                  label: Text("Qté",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
-                              DataColumn(
-                                  label: Text("Date d'ajout",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
-                              DataColumn(
-                                  label: Text("Date d'exp",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
-                              DataColumn(
-                                  label: Text("QR Code",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
-                              DataColumn(
-                                  label: Text("Actions",
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))),
+                              DataColumn(label: Text("N° Lot", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
+                              DataColumn(label: Text("Produit", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
+                              DataColumn(label: Text("Qté", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
+                              DataColumn(label: Text("Date d'ajout", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
+                              DataColumn(label: Text("Date d'exp", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
+                              DataColumn(label: Text("QR Code", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
+                              DataColumn(label: Text("Actions", style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15))),
                             ],
-                            rows: paginatedLots.map((l) {
-                              return DataRow(
-                                cells: [
-                                  DataCell(Text(
-                                    l['numero_lot']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 15),
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
-                                  DataCell(Text(
-                                    produits
-                                            .firstWhere(
-                                                (p) => p['id'] == l['produit'],
-                                                orElse: () =>
-                                                    {'nom': 'Inconnu'})['nom']
-                                            ?.toString() ??
-                                        'Inconnu',
-                                    style: const TextStyle(fontSize: 15),
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
-                                  DataCell(Text(
-                                    l['quantite']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 15),
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
-                                  DataCell(Text(
-                                    l['date_enregistrement']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 15),
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
-                                  DataCell(Text(
-                                    l['date_expiration']?.toString() ?? '',
-                                    style: const TextStyle(fontSize: 15),
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
-                                  DataCell(
-                                    (l['qr_code']?.toString().isNotEmpty ?? false)
-                                        ? Image.network(
-                                            l['qr_code'],
-                                            width: 32,
-                                            height: 32,
-                                            errorBuilder: (context, error, stackTrace) =>
-                                                const Icon(Icons.qr_code,
-                                                    color: Colors.grey, size: 20),
-                                          )
-                                        : const Icon(Icons.qr_code,
-                                            color: Colors.grey, size: 20),
-                                  ),
-                                  DataCell(
-                                    SizedBox(
-                                      width: 140,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit,
-                                                color: Colors.blue, size: 28),
-                                            tooltip: "Modifier",
-                                            onPressed: () {
-                                              produitLot = l['produit']?.toString();
-                                              quantiteLot = l['quantite']?.toString();
-                                              dateExpLot = l['date_expiration']?.toString();
-                                              _dateExpController.text = dateExpLot ?? '';
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text("Modifier le lot"),
-                                                  content: SizedBox(
-                                                    width: 300,
-                                                    child: Form(
-                                                      key: _formLotKey,
-                                                      child: SingleChildScrollView(
-                                                        child: Column(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            DropdownButtonFormField<String>(
-                                                              decoration: const InputDecoration(
-                                                                labelText: "Produit",
-                                                                labelStyle: TextStyle(fontSize: 12),
-                                                              ),
-                                                              value: produitLot,
-                                                              items: produits
-                                                                  .map((p) => DropdownMenuItem(
-                                                                        value: p['id'].toString(),
-                                                                        child: Text(
-                                                                          p['nom'] ?? '',
-                                                                          style: const TextStyle(fontSize: 12),
-                                                                          overflow: TextOverflow.ellipsis,
-                                                                        ),
-                                                                      ))
-                                                                  .toList(),
-                                                              onChanged: (v) => setState(() => produitLot = v),
-                                                              validator: (v) => v == null ? "Champ requis" : null,
-                                                            ),
-                                                            TextFormField(
-                                                              initialValue: quantiteLot,
-                                                              decoration: const InputDecoration(
-                                                                labelText: "Quantité",
-                                                                labelStyle: TextStyle(fontSize: 12),
-                                                              ),
-                                                              keyboardType: TextInputType.number,
-                                                              style: const TextStyle(fontSize: 12),
-                                                              onChanged: (v) => quantiteLot = v,
-                                                              validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
-                                                            ),
-                                                            TextFormField(
-                                                              readOnly: true,
-                                                              controller: _dateExpController,
-                                                              decoration: const InputDecoration(
-                                                                labelText: "Date d'expiration",
-                                                                labelStyle: TextStyle(fontSize: 12),
-                                                              ),
-                                                              style: const TextStyle(fontSize: 12),
-                                                              onTap: () async {
-                                                                FocusScope.of(context).requestFocus(FocusNode());
-                                                                final picked = await showDatePicker(
-                                                                  context: context,
-                                                                  initialDate: DateTime.tryParse(dateExpLot ?? '') ?? DateTime.now(),
-                                                                  firstDate: DateTime(2020),
-                                                                  lastDate: DateTime(2100),
-                                                                );
-                                                                if (picked != null) {
-                                                                  setState(() {
-                                                                    dateExpLot = picked.toIso8601String().substring(0, 10);
-                                                                    _dateExpController.text = dateExpLot!;
-                                                                  });
-                                                                }
-                                                              },
-                                                              validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text("Annuler"),
-                                                    ),
-                                                    ElevatedButton(
-                                                      onPressed: () async {
-                                                        if (_formLotKey.currentState?.validate() ?? false) {
-                                                          final success = await ProductService.updateLot(l['id'], {
-                                                            'produit': int.tryParse(produitLot!) ?? 0,
-                                                            'quantite': int.tryParse(quantiteLot!) ?? 0,
-                                                            'date_expiration': dateExpLot!,
-                                                          });
-                                                          if (success) {
-                                                            await _loadLots();
-                                                            Navigator.of(context).pop();
-                                                            ScaffoldMessenger.of(context).showSnackBar(
-                                                              const SnackBar(
-                                                                  content: Text("Lot modifié !"),
-                                                                  backgroundColor: Colors.green),
-                                                            );
-                                                          } else {
-                                                            ScaffoldMessenger.of(context).showSnackBar(
-                                                              const SnackBar(
-                                                                  content: Text("Erreur lors de la modification"),
-                                                                  backgroundColor: Colors.red),
-                                                            );
-                                                          }
-                                                        }
-                                                      },
-                                                      child: const Text("Enregistrer"),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red, size: 28),
-                                            tooltip: "Supprimer",
-                                            onPressed: () async {
-                                              final confirm = await showDialog<bool>(
-                                                context: context,
-                                                builder: (ctx) => AlertDialog(
-                                                  title: const Text("Confirmation"),
-                                                  content: const Text("Supprimer ce lot ?"),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () => Navigator.pop(ctx, false),
-                                                        child: const Text("Annuler")),
-                                                    TextButton(
-                                                        onPressed: () => Navigator.pop(ctx, true),
-                                                        child: const Text("Supprimer")),
-                                                  ],
-                                                ),
-                                              );
-                                              if (confirm == true) {
-                                                final success = await ProductService.deleteLot(l['id']);
-                                                if (success) {
-                                                  await _loadLots();
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(
-                                                        content: Text("Lot supprimé"),
-                                                        backgroundColor: Colors.green),
-                                                  );
-                                                } else {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(
-                                                        content: Text("Erreur suppression"),
-                                                        backgroundColor: Colors.red),
-                                                  );
-                                                }
-                                              }
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.remove_red_eye,
-                                                color: Colors.grey, size: 28),
-                                            tooltip: "Consulter",
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (ctx) => AlertDialog(
-                                                  title: const Text("Détail du lot"),
-                                                  content: SingleChildScrollView(
-                                                    child: Column(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          "N° Lot : ${l['numero_lot'] ?? ''}",
-                                                          style: const TextStyle(fontSize: 12),
-                                                        ),
-                                                        Text(
-                                                          "Produit : ${produits.firstWhere((p) => p['id'] == l['produit'], orElse: () => {'nom': 'Inconnu'})['nom']}",
-                                                          style: const TextStyle(fontSize: 12),
-                                                        ),
-                                                        Text(
-                                                          "Quantité : ${l['quantite'] ?? ''}",
-                                                          style: const TextStyle(fontSize: 12),
-                                                        ),
-                                                        Text(
-                                                          "Date d'ajout : ${l['date_enregistrement'] ?? ''}",
-                                                          style: const TextStyle(fontSize: 12),
-                                                        ),
-                                                        Text(
-                                                          "Date d'expiration : ${l['date_expiration'] ?? ''}",
-                                                          style: const TextStyle(fontSize: 12),
-                                                        ),
-                                                        const SizedBox(height: 10),
-                                                        Center(
-                                                          child: l['qr_code'] != null && l['qr_code'].toString().isNotEmpty
-                                                              ? Image.network(
-                                                                  l['qr_code'],
-                                                                  width: 80,
-                                                                  height: 80,
-                                                                  errorBuilder: (context, error, stackTrace) =>
-                                                                      const Icon(Icons.qr_code, size: 50, color: Colors.grey),
-                                                                )
-                                                              : const Icon(Icons.qr_code, size: 50, color: Colors.grey),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () => Navigator.pop(ctx),
-                                                        child: const Text("Fermer")),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
+                            rows: paginatedLots.isEmpty
+                                ? <DataRow>[
+                                    DataRow(
+                                      cells: List.generate(
+                                        7,
+                                        (index) => index == 0
+                                            ? const DataCell(Text("Aucun lot trouvé"))
+                                            : const DataCell(SizedBox.shrink()),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
+                                  ]
+                                : paginatedLots.map((l) {
+                                    final produitNom = produits
+                                        .firstWhere(
+                                          (p) => p['id'] == l['produit'],
+                                          orElse: () => {'nom': 'Inconnu'},
+                                        )['nom']
+                                        ?.toString() ?? 'Inconnu';
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(l['numero_lot']?.toString() ?? '', style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis)),
+                                        DataCell(Text(produitNom, style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis)),
+                                        DataCell(Text(l['quantite']?.toString() ?? '', style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis)),
+                                        DataCell(Text(l['date_enregistrement']?.toString() ?? '', style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis)),
+                                        DataCell(Text(l['date_expiration']?.toString() ?? '', style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis)),
+                                        DataCell(
+                                          (l['qr_code']?.toString().isNotEmpty ?? false)
+                                              ? Image.network(
+                                                  l['qr_code'],
+                                                  width: 32,
+                                                  height: 32,
+                                                  errorBuilder: (context, error, stackTrace) =>
+                                                      const Icon(Icons.qr_code, color: Colors.grey, size: 20),
+                                                )
+                                              : const Icon(Icons.qr_code, color: Colors.grey, size: 20),
+                                        ),
+                                        DataCell(
+                                          SizedBox(
+                                            width: 140,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(Icons.edit,
+                                                      color: Colors.blue, size: 28),
+                                                  tooltip: "Modifier",
+                                                  onPressed: () {
+                                                    produitLot = l['produit']?.toString();
+                                                    quantiteLot = l['quantite']?.toString();
+                                                    dateExpLot = l['date_expiration']?.toString();
+                                                    _dateExpController.text = dateExpLot ?? '';
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) => AlertDialog(
+                                                        title: const Text("Modifier le lot"),
+                                                        content: SizedBox(
+                                                          width: 300,
+                                                          child: Form(
+                                                            key: _formLotKey,
+                                                            child: SingleChildScrollView(
+                                                              child: Column(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                children: [
+                                                                  DropdownButtonFormField<String>(
+                                                                    decoration: const InputDecoration(
+                                                                      labelText: "Produit",
+                                                                      labelStyle: TextStyle(fontSize: 12),
+                                                                    ),
+                                                                    value: produitLot,
+                                                                    items: produits
+                                                                        .map((p) => DropdownMenuItem(
+                                                                              value: p['id'].toString(),
+                                                                              child: Text(
+                                                                                p['nom'] ?? '',
+                                                                                style: const TextStyle(fontSize: 12),
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                              ),
+                                                                            ))
+                                                                        .toList(),
+                                                                    onChanged: (v) => setState(() => produitLot = v),
+                                                                    validator: (v) => v == null ? "Champ requis" : null,
+                                                                  ),
+                                                                  TextFormField(
+                                                                    initialValue: quantiteLot,
+                                                                    decoration: const InputDecoration(
+                                                                      labelText: "Quantité",
+                                                                      labelStyle: TextStyle(fontSize: 12),
+                                                                    ),
+                                                                    keyboardType: TextInputType.number,
+                                                                    style: const TextStyle(fontSize: 12),
+                                                                    onChanged: (v) => quantiteLot = v,
+                                                                    validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                                                                  ),
+                                                                  TextFormField(
+                                                                    readOnly: true,
+                                                                    controller: _dateExpController,
+                                                                    decoration: const InputDecoration(
+                                                                      labelText: "Date d'expiration",
+                                                                      labelStyle: TextStyle(fontSize: 12),
+                                                                    ),
+                                                                    style: const TextStyle(fontSize: 12),
+                                                                    onTap: () async {
+                                                                      FocusScope.of(context).requestFocus(FocusNode());
+                                                                      final picked = await showDatePicker(
+                                                                        context: context,
+                                                                        initialDate: DateTime.tryParse(dateExpLot ?? '') ?? DateTime.now(),
+                                                                        firstDate: DateTime(2020),
+                                                                        lastDate: DateTime(2100),
+                                                                      );
+                                                                      if (picked != null) {
+                                                                        setState(() {
+                                                                          dateExpLot = picked.toIso8601String().substring(0, 10);
+                                                                          _dateExpController.text = dateExpLot!;
+                                                                        });
+                                                                      }
+                                                                    },
+                                                                    validator: (v) => v == null || v.isEmpty ? "Champ requis" : null,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () => Navigator.of(context).pop(),
+                                                            child: const Text("Annuler"),
+                                                          ),
+                                                          ElevatedButton(
+                                                            onPressed: () async {
+                                                              if (_formLotKey.currentState?.validate() ?? false) {
+                                                                final success = await ProductService.updateLot(l['id'], {
+                                                                  'produit': int.tryParse(produitLot!) ?? 0,
+                                                                  'quantite': int.tryParse(quantiteLot!) ?? 0,
+                                                                  'date_expiration': dateExpLot!,
+                                                                });
+                                                                if (success) {
+                                                                  await _loadLots();
+                                                                  Navigator.of(context).pop();
+                                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                                    const SnackBar(
+                                                                        content: Text("Lot modifié !"),
+                                                                        backgroundColor: Colors.green),
+                                                                  );
+                                                                } else {
+                                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                                    const SnackBar(
+                                                                        content: Text("Erreur lors de la modification"),
+                                                                        backgroundColor: Colors.red),
+                                                                  );
+                                                                }
+                                                              }
+                                                            },
+                                                            child: const Text("Enregistrer"),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.delete,
+                                                      color: Colors.red, size: 28),
+                                                  tooltip: "Supprimer",
+                                                  onPressed: () async {
+                                                    final confirm = await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (ctx) => AlertDialog(
+                                                        title: const Text("Confirmation"),
+                                                        content: const Text("Supprimer ce lot ?"),
+                                                        actions: [
+                                                          TextButton(
+                                                              onPressed: () => Navigator.pop(ctx, false),
+                                                              child: const Text("Annuler")),
+                                                          TextButton(
+                                                              onPressed: () => Navigator.pop(ctx, true),
+                                                              child: const Text("Supprimer")),
+                                                        ],
+                                                      ),
+                                                    );
+                                                    if (confirm == true) {
+                                                      final success = await ProductService.deleteLot(l['id']);
+                                                      if (success) {
+                                                        await _loadLots();
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          const SnackBar(
+                                                              content: Text("Lot supprimé"),
+                                                              backgroundColor: Colors.green),
+                                                        );
+                                                      } else {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          const SnackBar(
+                                                              content: Text("Erreur suppression"),
+                                                              backgroundColor: Colors.red),
+                                                        );
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.remove_red_eye,
+                                                      color: Colors.grey, size: 28),
+                                                  tooltip: "Consulter",
+                                                  onPressed: () {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (ctx) => AlertDialog(
+                                                        title: const Text("Détail du lot"),
+                                                        content: SingleChildScrollView(
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text(
+                                                                "N° Lot : ${l['numero_lot'] ?? ''}",
+                                                                style: const TextStyle(fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "Produit : ${produits.firstWhere((p) => p['id'] == l['produit'], orElse: () => {'nom': 'Inconnu'})['nom']}",
+                                                                style: const TextStyle(fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "Quantité : ${l['quantite'] ?? ''}",
+                                                                style: const TextStyle(fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "Date d'ajout : ${l['date_enregistrement'] ?? ''}",
+                                                                style: const TextStyle(fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "Date d'expiration : ${l['date_expiration'] ?? ''}",
+                                                                style: const TextStyle(fontSize: 12),
+                                                              ),
+                                                              const SizedBox(height: 10),
+                                                              Center(
+                                                                child: l['qr_code'] != null && l['qr_code'].toString().isNotEmpty
+                                                                    ? Image.network(
+                                                                        l['qr_code'],
+                                                                        width: 80,
+                                                                        height: 80,
+                                                                        errorBuilder: (context, error, stackTrace) =>
+                                                                            const Icon(Icons.qr_code, size: 50, color: Colors.grey),
+                                                                      )
+                                                                    : const Icon(Icons.qr_code, size: 50, color: Colors.grey),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                              onPressed: () => Navigator.pop(ctx),
+                                                              child: const Text("Fermer")),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ]);
+                                    }).toList(),
                           ),
                         ),
                       ),
