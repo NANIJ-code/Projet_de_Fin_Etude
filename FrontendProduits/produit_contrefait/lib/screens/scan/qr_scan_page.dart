@@ -32,6 +32,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
   XFile? _pickedImage;
   Map<String, dynamic>? _backendResult;
   Timer? _scanTimer;
+  Color? _backendMsgColor;
+  String? _backendMsg;
 
   @override
   void initState() {
@@ -105,8 +107,11 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
   }
 
   void _startScanning() {
-    if (_controller == null || !_controller!.value.isInitialized || _isScanning) {
-      debugPrint('Scanning impossible : controller=${_controller != null}, initialized=${_controller?.value.isInitialized}, scanning=$_isScanning');
+    if (_controller == null ||
+        !_controller!.value.isInitialized ||
+        _isScanning) {
+      debugPrint(
+          'Scanning impossible : controller=${_controller != null}, initialized=${_controller?.value.isInitialized}, scanning=$_isScanning');
       return;
     }
     debugPrint('Démarrage du scanning continu...');
@@ -118,7 +123,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
     if (kIsWeb) {
       _scanTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
         if (!_isScanning || _isCapturing) {
-          debugPrint('Scanning ignoré : scanning=$_isScanning, capturing=$_isCapturing');
+          debugPrint(
+              'Scanning ignoré : scanning=$_isScanning, capturing=$_isCapturing');
           return;
         }
         setState(() {
@@ -133,7 +139,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
           // Enregistrer l'image pour inspection (pour débogage)
           if (!kIsWeb) {
             final directory = await getTemporaryDirectory();
-            final path = '${directory.path}/qr_scan_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            final path =
+                '${directory.path}/qr_scan_${DateTime.now().millisecondsSinceEpoch}.jpg';
             await io.File(path).writeAsBytes(bytes);
             debugPrint('Image enregistrée pour inspection : $path');
           }
@@ -217,10 +224,12 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
   Uint8List? _convertCameraImageToBytes(CameraImage image) {
     try {
       if (image.format.group != ImageFormatGroup.yuv420) {
-        debugPrint('Format d\'image non pris en charge : ${image.format.group}');
+        debugPrint(
+            'Format d\'image non pris en charge : ${image.format.group}');
         return null;
       }
-      debugPrint('Conversion de l\'image YUV420, taille : ${image.planes[0].bytes.length}');
+      debugPrint(
+          'Conversion de l\'image YUV420, taille : ${image.planes[0].bytes.length}');
       return image.planes[0].bytes;
     } catch (e) {
       debugPrint('Erreur lors de la conversion de l\'image : $e');
@@ -267,7 +276,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
 
   Future<String?> _decodeQr(Uint8List bytes) async {
     try {
-      debugPrint('Début du décodage de l\'image... Taille des bytes : ${bytes.length}');
+      debugPrint(
+          'Début du décodage de l\'image... Taille des bytes : ${bytes.length}');
       if (bytes.isEmpty) {
         debugPrint('Erreur : Les bytes de l\'image sont vides.');
         return null;
@@ -278,9 +288,11 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
           debugPrint('Échec du décodage de l\'image : image null.');
           return null;
         }
-        debugPrint('Image décodée : largeur=${image.width}, hauteur=${image.height}, format=${image.format}');
+        debugPrint(
+            'Image décodée : largeur=${image.width}, hauteur=${image.height}, format=${image.format}');
         if (image.width < 100 || image.height < 100) {
-          debugPrint('Erreur : Image trop petite pour un décodage fiable (largeur=${image.width}, hauteur=${image.height}).');
+          debugPrint(
+              'Erreur : Image trop petite pour un décodage fiable (largeur=${image.width}, hauteur=${image.height}).');
           return null;
         }
         final rgbInts = Int32List(image.width * image.height);
@@ -308,7 +320,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
         // Mobile natif : qr_code_tools
         debugPrint('Utilisation de qr_code_tools pour le décodage...');
         final tempDir = await getTemporaryDirectory();
-        final tempFile = io.File('${tempDir.path}/qr_temp_${DateTime.now().millisecondsSinceEpoch}.png');
+        final tempFile = io.File(
+            '${tempDir.path}/qr_temp_${DateTime.now().millisecondsSinceEpoch}.png');
         await tempFile.writeAsBytes(bytes);
         debugPrint('Image temporaire enregistrée : ${tempFile.path}');
         final result = await QrCodeToolsPlugin.decodeFrom(tempFile.path);
@@ -325,7 +338,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
   Future<void> _checkBackend(String code) async {
     debugPrint('Envoi de la requête au backend pour le code : $code');
     final token = await _getToken();
-    final url = Uri.parse('http://localhost:8000/api_produits/unite_produit/scanner/?code=$code');
+    final url = Uri.parse(
+        'http://localhost:8000/api_produits/unite_produit/scanner/?code=$code');
     final response = await http.get(
       url,
       headers: {
@@ -333,80 +347,96 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
         if (token != null) 'Authorization': 'Bearer $token',
       },
     );
-    debugPrint('Réponse du backend : status=${response.statusCode}, body=${response.body}');
+    debugPrint(
+        'Réponse du backend : status=${response.statusCode}, body=${response.body}');
     if (response.statusCode == 200) {
-      dynamic backendData = response.body.isNotEmpty ? json.decode(response.body) : {};
-     // Si c'est une liste, transforme-la en map
+      dynamic backendData =
+          response.body.isNotEmpty ? json.decode(response.body) : {};
       if (backendData is List && backendData.isNotEmpty) {
-        backendData = <String, dynamic>{"message": backendData.first.toString()};
+        backendData = <String, dynamic>{
+          "message": backendData.first.toString()
+        };
       } else if (backendData is! Map) {
         backendData = <String, dynamic>{"message": backendData.toString()};
       }
       setState(() {
         _backendResult = backendData as Map<String, dynamic>;
+        // Gestion couleur/message selon le backend
+        final msg = _backendResult?['message']?.toString().toLowerCase() ?? '';
+        if (msg.contains('suspect')) {
+          _backendMsgColor = Colors.blue;
+        } else if (msg.contains('inconnu')) {
+          _backendMsgColor = Colors.red;
+        } else {
+          _backendMsgColor = Colors.green;
+        }
+        _backendMsg = _backendResult?['message'] ??
+            _backendResult?['nom'] ??
+            "Produit reconnu";
       });
-      final backendMsg = _backendResult?['message'] ?? _backendResult?['nom'] ?? "Produit reconnu";
-      if (backendMsg != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(backendMsg),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
     } else {
       setState(() {
         _backendResult = {"error": "Produit inconnu ou erreur backend"};
+        _backendMsgColor = Colors.red;
+        _backendMsg = "Produit inconnu ou erreur backend";
       });
-      debugPrint('Erreur backend : ${_backendResult!['error']}');
     }
   }
 
   Future<void> _envoyerAlerte(String userMessage) async {
-  debugPrint('Envoi d\'une alerte...');
-  final token = await _getToken();
+    debugPrint('Envoi d\'une alerte...');
+    final token = await _getToken();
 
-  String url;
-  Map<String, dynamic> body;
+    String url;
+    Map<String, dynamic> body;
 
-  final uuid = _backendResult?['uuid'] ?? _backendResult?['uuid_produit'];
-  if (uuid != null && uuid != "null") {
-    url = 'http://localhost:8000/api_produits/unite_produit/alerte/?uuid=$uuid';
-    body = {
-      'message': userMessage,
-    };
-  } else {
-    url = 'http://localhost:8000/api_produits/unite_produit/alerte/';
-    body = {
-      'code_scanned': _scanResult ?? '',
-      'message': userMessage,
-    };
-  }
+    final uuid = _backendResult?['uuid'] ?? _backendResult?['uuid_produit'];
+    if (uuid != null && uuid != "null") {
+      url =
+          'http://localhost:8000/api_produits/unite_produit/alerte/?uuid=$uuid';
+      body = {
+        'message': userMessage,
+      };
+    } else {
+      url = 'http://localhost:8000/api_produits/unite_produit/alerte/';
+      body = {
+        'code_scanned': _scanResult ?? '',
+        'message': userMessage,
+      };
+    }
 
-  final response = await http.post(
-    Uri.parse(url),
-    headers: {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    },
-    body: json.encode(body),
-  );
-  debugPrint('Réponse de l\'alerte : status=${response.statusCode}, body=${response.body}');
-  if (response.statusCode == 200 || response.statusCode == 201) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Alerte envoyée au backend !"), backgroundColor: Colors.green),
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: json.encode(body),
     );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Erreur backend : ${response.body}"), backgroundColor: Colors.red),
-    );
+    debugPrint(
+        'Réponse de l\'alerte : status=${response.statusCode}, body=${response.body}');
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Alerte envoyée au backend !"),
+            backgroundColor: Colors.green),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Erreur backend : ${response.body}"),
+            backgroundColor: Colors.red),
+      );
+    }
   }
-}
 
   Future<void> captureAndDecode() async {
-    if (_isScanning || _controller == null || !_controller!.value.isInitialized || _isCapturing) {
-      debugPrint('Capture impossible : scanning=$_isScanning, controller=${_controller != null}, initialized=${_controller?.value.isInitialized}, capturing=$_isCapturing');
+    if (_isScanning ||
+        _controller == null ||
+        !_controller!.value.isInitialized ||
+        _isCapturing) {
+      debugPrint(
+          'Capture impossible : scanning=$_isScanning, controller=${_controller != null}, initialized=${_controller?.value.isInitialized}, capturing=$_isCapturing');
       return;
     }
     setState(() {
@@ -481,7 +511,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
             if (_isScanning)
               const Text(
                 'Scanning en cours... Pointez la caméra vers un QR code.',
-                style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
               ),
             const SizedBox(height: 10),
             ElevatedButton.icon(
@@ -499,7 +530,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: _isLoading || _isScanning ? null : _startScanning,
+                    onPressed:
+                        _isLoading || _isScanning ? null : _startScanning,
                     icon: const Icon(Icons.qr_code_scanner),
                     label: const Text("Scanner avec la caméra"),
                     style: ElevatedButton.styleFrom(
@@ -520,7 +552,9 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                 ],
               ),
             ),
-            if (_scanResult != null && _backendResult != null && _backendResult!['error'] == null) ...[
+            if (_scanResult != null &&
+                _backendResult != null &&
+                _backendResult!['error'] == null) ...[
               const SizedBox(height: 20),
               Card(
                 elevation: 3,
@@ -535,16 +569,32 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                       const SizedBox(height: 8),
                       Text(
                         _scanResult!,
-                        style: const TextStyle(fontSize: 18, color: Colors.green),
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.green),
                       ),
                       const SizedBox(height: 12),
+                      if (_backendMsg != null)
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(top: 12.0, bottom: 8.0),
+                          child: Text(
+                            _backendMsg!,
+                            style: TextStyle(
+                              color: _backendMsgColor ?? Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
                             onPressed: () async {
                               // 3. DEMANDER UN MESSAGE AVANT ENVOI
-                              final TextEditingController msgController = TextEditingController();
+                              final TextEditingController msgController =
+                                  TextEditingController();
                               final result = await showDialog<String>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
@@ -553,7 +603,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                                     controller: msgController,
                                     maxLines: 3,
                                     decoration: const InputDecoration(
-                                      hintText: "Saisissez le message à envoyer avec l'alerte",
+                                      hintText:
+                                          "Saisissez le message à envoyer avec l'alerte",
                                     ),
                                   ),
                                   actions: [
@@ -562,7 +613,8 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                                       child: const Text("Annuler"),
                                     ),
                                     ElevatedButton(
-                                      onPressed: () => Navigator.pop(ctx, msgController.text.trim()),
+                                      onPressed: () => Navigator.pop(
+                                          ctx, msgController.text.trim()),
                                       child: const Text("Envoyer"),
                                     ),
                                   ],
@@ -583,12 +635,13 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                           // 2. BOUTON POSITION SI PRODUIT RECONNU
                           ElevatedButton.icon(
                             onPressed: () async {
-                              // Récupère le nom de l'utilisateur connecté
-                              final prefs = await SharedPreferences.getInstance();
-                              final userName = prefs.getString('user_name');
-                              if (userName == null || userName.isEmpty) {
+                              final uuid = _backendResult?['uuid'] ??
+                                  _backendResult?['uuid_produit'];
+                              if (uuid == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Utilisateur non connecté"), backgroundColor: Colors.red),
+                                  const SnackBar(
+                                      content: Text("UUID manquant"),
+                                      backgroundColor: Colors.red),
                                 );
                                 return;
                               }
@@ -596,11 +649,14 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: const Text("Mettre à jour la position"),
-                                  content: Text("Voulez-vous enregistrer votre nom ($userName) comme position de l'objet ?"),
+                                  title:
+                                      const Text("Mettre à jour la position"),
+                                  content: const Text(
+                                      "Voulez-vous enregistrer votre nom comme position de l'objet ?"),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.pop(ctx, false),
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
                                       child: const Text("Annuler"),
                                     ),
                                     ElevatedButton(
@@ -612,25 +668,28 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                               );
                               if (confirm == true) {
                                 final token = await _getToken();
-                                final uuid = _backendResult?['uuid'] ?? _backendResult?['uuid_produit'];
-                                if (uuid != null) {
-                                  final response = await http.patch(
-                                    Uri.parse('http://localhost:8000/api_produits/unite_produit/position/?uuid=$uuid'),
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      if (token != null) 'Authorization': 'Bearer $token',
-                                    },
-                                    body: json.encode({'position': userName}),
+                                final response = await http.post(
+                                  Uri.parse(
+                                      'http://localhost:8000/api_produits/unite_produit/maj-position/?uuid=$uuid'),
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    if (token != null)
+                                      'Authorization': 'Bearer $token',
+                                  },
+                                );
+                                if (response.statusCode == 200) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text("Position mise à jour !"),
+                                        backgroundColor: Colors.green),
                                   );
-                                  if (response.statusCode == 200) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Position mise à jour !"), backgroundColor: Colors.green),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Erreur : ${response.body}"), backgroundColor: Colors.red),
-                                    );
-                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text("Erreur : ${response.body}"),
+                                        backgroundColor: Colors.red),
+                                  );
                                 }
                               }
                             },
@@ -638,6 +697,87 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
                             label: const Text("Position"),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final uuid = _backendResult?['uuid'] ??
+                                  _backendResult?['uuid_produit'];
+                              if (uuid == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text("UUID manquant"),
+                                      backgroundColor: Colors.red),
+                                );
+                                return;
+                              }
+                              final token = await _getToken();
+                              final response = await http.get(
+                                Uri.parse(
+                                    'http://localhost:8000/api_produits/unite_produit/historique/?uuid=$uuid'),
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  if (token != null)
+                                    'Authorization': 'Bearer $token',
+                                },
+                              );
+                              if (response.statusCode == 200) {
+                                final historique = json.decode(response.body);
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text("Historique du produit"),
+                                    content: SizedBox(
+                                      width: 400,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: historique.length,
+                                        itemBuilder: (ctx, i) {
+                                          final h = historique[i];
+                                          return ListTile(
+                                            title: Text(h['titre'] ?? ''),
+                                            subtitle: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(h['date'] ?? '',
+                                                    style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey)),
+                                                ...((h['details'] as List?) ??
+                                                        [])
+                                                    .map((d) =>
+                                                        Text(d.toString()))
+                                                    .toList(),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: const Text("Fermer"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          "Erreur historique : ${response.body}"),
+                                      backgroundColor: Colors.red),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.history),
+                            label: const Text("Historique"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
                               foregroundColor: Colors.white,
                             ),
                           ),

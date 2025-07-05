@@ -1,7 +1,10 @@
-// ignore_for_file: unused_local_variable, deprecated_member_use
+// ignore_for_file: unused_local_variable, deprecated_member_use, use_build_context_synchronously
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Copie la classe ResponsiveSidebar depuis user_screen.dart
 
@@ -66,7 +69,8 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                   color: const Color(0xFF1A6FC9).withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.security, color: Color(0xFF1A6FC9), size: 28),
+                child: const Icon(Icons.security,
+                    color: Color(0xFF1A6FC9), size: 28),
               ),
             ),
             if (_isHovered || isMobile)
@@ -91,7 +95,8 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                 onTap: () => widget.onItemSelected(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                   padding: EdgeInsets.symmetric(
                     vertical: 2,
                     horizontal: _isHovered || isMobile ? 8 : 0,
@@ -133,8 +138,9 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                               color: isActive
                                   ? const Color(0xFF1A6FC9)
                                   : const Color(0xFFB3B8C8),
-                              fontWeight:
-                                  isActive ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                               fontSize: 15,
                             ),
                           ),
@@ -160,11 +166,13 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                         color: const Color(0xFF1A6FC9).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.person, color: Color(0xFF1A6FC9), size: 26),
+                      child: const Icon(Icons.person,
+                          color: Color(0xFF1A6FC9), size: 26),
                     ),
+                    if (_isHovered || isMobile) const SizedBox(width: 8),
                     if (_isHovered || isMobile)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
+                      Expanded(
+                        // <-- Ajoute ceci
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -175,6 +183,7 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               "Administrateur",
@@ -182,6 +191,7 @@ class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
                                 color: Colors.blueGrey,
                                 fontSize: 12,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -212,33 +222,135 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  int selectedIndex = 5; // Index de "Alertes"
+  int selectedIndex = 5;
+  List<Map<String, dynamic>> _alertes = [];
+  bool _loading = true;
+  String? _error;
 
-  void _onSidebarItemSelected(int i) {
-    setState(() => selectedIndex = i);
-    switch (i) {
-      case 0:
-        Navigator.of(context).pushReplacementNamed('/dashboard');
-        break;
-      case 1:
-        Navigator.of(context).pushReplacementNamed('/scan');
-        break;
-      case 2:
-        Navigator.of(context).pushReplacementNamed('/user');
-        break;
-      case 3:
-        Navigator.of(context).pushReplacementNamed('/product');
-        break;
-      case 4:
-        Navigator.of(context).pushReplacementNamed('/transaction');
-        break;
-      case 5:
-        // Déjà sur alertes
-        break;
-      case 6:
-        Navigator.of(context).pushReplacementNamed('/settings');
-        break;
+  @override
+  void initState() {
+    super.initState();
+    _fetchAlertes();
+  }
+
+  Future<void> _fetchAlertes() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse('http://localhost:8000/api_produits/alertes/'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        final List data = json.decode(utf8.decode(response.bodyBytes));
+        setState(() {
+          _alertes = data.cast<Map<String, dynamic>>();
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _error = "Erreur serveur : ${response.statusCode}";
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = "Erreur réseau : $e";
+        _loading = false;
+      });
     }
+  }
+
+  Future<void> _showAlerteDetail(int id) async {
+    final token = await _getToken();
+    showDialog(
+      context: context,
+      builder: (ctx) => FutureBuilder<http.Response>(
+        future: http.get(
+          Uri.parse('http://localhost:8000/api_produits/alertes/$id/'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+        builder: (ctx, snap) {
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.data!.statusCode != 200) {
+            return AlertDialog(
+              title: const Text("Erreur"),
+              content:
+                  const Text("Impossible de charger le détail de l'alerte."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Fermer"),
+                ),
+              ],
+            );
+          }
+          final detail = json.decode(utf8.decode(snap.data!.bodyBytes));
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text(
+              "Détail de l'alerte",
+              style: GoogleFonts.playfairDisplay(fontWeight: FontWeight.bold),
+            ),
+            content: SizedBox(
+              width: 350,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Type : ${detail['type'] ?? 'Inconnu'}",
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text("Message : ${detail['message'] ?? ''}"),
+                  const SizedBox(height: 8),
+                  Text("Produit : ${detail['produit'] ?? ''}"),
+                  const SizedBox(height: 8),
+                  Text(
+                      "Date : ${detail['date'] ?? detail['created_at'] ?? ''}"),
+                  const SizedBox(height: 8),
+                  Text(
+                      "Utilisateur : ${detail['utilisateur'] ?? detail['user'] ?? ''}"),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Fermer"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getAlerteColor(Map<String, dynamic> alerte) {
+    final type = (alerte['type'] ?? '').toString().toLowerCase();
+    if (type.contains('inconnu')) {
+      return const Color(0xFFB42B51); // Rouge
+    }
+    return const Color(0xFF1A6FC9); // Bleu
+  }
+
+  IconData _getAlerteIcon(Map<String, dynamic> alerte) {
+    final type = (alerte['type'] ?? '').toString().toLowerCase();
+    if (type.contains('inconnu')) {
+      return Icons.error_outline;
+    }
+    return Icons.warning_amber_rounded;
   }
 
   @override
@@ -273,102 +385,166 @@ class _AlertsScreenState extends State<AlertsScreen> {
               ),
               child: Padding(
                 padding: EdgeInsets.all(isMobile ? 12.0 : 32.0),
-                child: ListView(
-                  children: [
-                    // Header style dashboard
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 28, horizontal: 24),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1A6FC9), Color(0xFF16213E)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        "Alertes",
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Card d'alertes
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Dernières alertes",
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1A1A2E),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: 3,
-                              separatorBuilder: (_, __) => const Divider(),
-                              itemBuilder: (context, i) => ListTile(
-                                leading: const Icon(Icons.warning_amber_rounded,
-                                    color: Color(0xFFB42B51)),
-                                title: Text(
-                                  "Alerte ${i + 1} : Produit suspect détecté",
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(
+                            child: Text(_error!,
+                                style: const TextStyle(color: Colors.red)))
+                        : _alertes.isEmpty
+                            ? Center(
+                                child: Text(
+                                  "Aucune alerte trouvée.",
                                   style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.w600),
+                                      fontSize: 18, color: Colors.grey),
                                 ),
-                                subtitle: Text(
-                                  "Le ${DateTime.now().subtract(Duration(hours: i * 3)).toString().substring(0, 16)}",
-                                  style: GoogleFonts.montserrat(fontSize: 13),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () {},
+                              )
+                            : ListView.separated(
+                                itemCount: _alertes.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 18),
+                                itemBuilder: (context, i) {
+                                  final alerte = _alertes[i];
+                                  final color = _getAlerteColor(alerte);
+                                  final icon = _getAlerteIcon(alerte);
+                                  String dateStr = (alerte['date'] ??
+                                          alerte['created_at'] ??
+                                          '')
+                                      .toString()
+                                      .replaceAll('T', ' ');
+                                  if (dateStr.length > 16) {
+                                    dateStr = dateStr.substring(0, 16);
+                                  }
+                                  return InkWell(
+                                    borderRadius: BorderRadius.circular(28),
+                                    onTap: () =>
+                                        _showAlerteDetail(alerte['id']),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(24),
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.09),
+                                        borderRadius: BorderRadius.circular(28),
+                                        border: Border.all(
+                                          color: color.withOpacity(0.25),
+                                          width: 2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: color.withOpacity(0.08),
+                                            blurRadius: 16,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: 54,
+                                            height: 54,
+                                            decoration: BoxDecoration(
+                                              color: color.withOpacity(0.18),
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                            ),
+                                            child: Icon(icon,
+                                                color: color, size: 36),
+                                          ),
+                                          const SizedBox(width: 22),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  (alerte['type'] ?? 'Alerte')
+                                                      .toString()
+                                                      .toUpperCase(),
+                                                  style: GoogleFonts.montserrat(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                    color: color,
+                                                    letterSpacing: 1.2,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  alerte['message'] ?? '',
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize: 16,
+                                                    color:
+                                                        const Color(0xFF1A1A2E),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 10),
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.calendar_today,
+                                                        size: 16, color: color),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      dateStr,
+                                                      style: GoogleFonts
+                                                          .montserrat(
+                                                              fontSize: 13,
+                                                              color: color),
+                                                    ),
+                                                    const SizedBox(width: 18),
+                                                    Icon(Icons.person,
+                                                        size: 16, color: color),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      (alerte['utilisateur'] ??
+                                                          alerte['user'] ??
+                                                          ''),
+                                                      style: GoogleFonts
+                                                          .montserrat(
+                                                              fontSize: 13,
+                                                              color: color),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token =
+        prefs.getString('token'); // doit être le token d'accès (access)
+    return token;
+  }
+
+  void _onSidebarItemSelected(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+    final routes = [
+      '/dashboard',
+      '/scan',
+      '/user',
+      '/product',
+      '/transaction',
+      '/alerts',
+      '/settings',
+    ];
+    if (index >= 0 && index < routes.length) {
+      Navigator.of(context).pushReplacementNamed(routes[index]);
+    }
   }
 }
 

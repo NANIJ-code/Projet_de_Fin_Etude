@@ -50,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('access_token', data['access']);
         await prefs.setString('refresh_token', data['refresh']);
+        await prefs.setString('token', data['access']); // Ajoute cette ligne
 
         // Décoder le token pour obtenir l'id utilisateur
         Map<String, dynamic> decodedToken = JwtDecoder.decode(data['access']);
