@@ -73,7 +73,7 @@ class LotProduitViewSet(viewsets.ModelViewSet):
 class UniteProduitViewSet(viewsets.ModelViewSet):
     queryset = UniteProduit.objects.all()
     serializer_class = UniteProduitSerializer
-    permission_classes =  [permissions.IsAuthenticated]
+    # permission_classes =  [permissions.IsAuthenticated]
     
     # def get_serializer_class(self):
     #     if self.action in ['retrieve', 'scan']:
@@ -108,9 +108,7 @@ class UniteProduitViewSet(viewsets.ModelViewSet):
                 "Assurez vous que le QR code soit bien en face du lecteur. "
                 "Si le problème persiste lancez une alerte.")
         
-        # produit_vendu = ("Attention Produit déjà vendu ! \n\n Ce produit a déjà été vendu par. "
-        #         "Il ne peut pas être scanné à nouveau. "
-        #         "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support.")
+        
         qr_manquant = f"Code QR manquant"
         code = request.query_params.get('code')
         if not code:

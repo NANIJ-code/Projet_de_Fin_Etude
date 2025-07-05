@@ -25,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ls=)e%wpdj6q!(drb5%jww9ghx5d--=sk0ewv9n71_0w+h9&$v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ['*']  
 # !!!!! Autoriser toutes les adresses IP pour le développement local, a modifier pour le deploiement
-
+# CORS_ALLOW_ALL_ORIGINS = ['https://nom-de-domaine.com']
 # Application definition
 
 INSTALLED_APPS = [
@@ -142,7 +142,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # modèle utilisateur personnalisé
 AUTH_USER_MODEL = 'users.Utilisateur'
 
+# !!!!!!!!!!!!!!!!!! A  modifier !!!!!!!!!!!!!!!!!!!!!!!!!
 FRONTEND_LOGIN_URL = "https://monappflutter.com/"  # ou l'URL de ton frontend
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # Par défaut 5 min, à adapter
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
