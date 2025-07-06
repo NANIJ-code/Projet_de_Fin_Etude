@@ -24,14 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-ls=)e%wpdj6q!(drb5%jww9ghx5d--=sk0ewv9n71_0w+h9&$v'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-# ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['*']  
+# SECURITY WARNING: don't run with debug turned on in production! 
 # !!!!! Autoriser toutes les adresses IP pour le développement local, a modifier pour le deploiement
 # CORS_ALLOW_ALL_ORIGINS = ['https://nom-de-domaine.com']
 # Application definition
+DEBUG = False
+ALLOWED_HOSTS = ['13.50.196.155']
+CORS_ALLOWED_ORIGINS = ['http://13.50.196.155']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
