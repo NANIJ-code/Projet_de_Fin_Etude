@@ -18,6 +18,8 @@ class _UniteProduitScreenState extends State<UniteProduitScreen> {
   List<Map<String, dynamic>> unites = [];
   bool _isLoading = true;
   String? _error;
+  int _currentPage = 0;
+  static const int _pageSize = 8;
 
   @override
   void initState() {
@@ -114,6 +116,12 @@ class _UniteProduitScreenState extends State<UniteProduitScreen> {
     if (_error != null) {
       return Center(child: Text(_error!, style: const TextStyle(color: Colors.red)));
     }
+    final int start = _currentPage * _pageSize;
+    final int end = (_currentPage + 1) * _pageSize;
+    final List<Map<String, dynamic>> pageUnites = unites.sublist(
+      start,
+      end > unites.length ? unites.length : end,
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text("Unité de produit"),
@@ -145,120 +153,148 @@ class _UniteProduitScreenState extends State<UniteProduitScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(const Color(0xFF1E3A8A)),
-              headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              columns: [
-                DataColumn(label: Text("ID", style: GoogleFonts.montserrat(color: Colors.white))),
-                DataColumn(label: Text("Lot", style: GoogleFonts.montserrat(color: Colors.white))),
-                DataColumn(label: Text("Position", style: GoogleFonts.montserrat(color: Colors.white))),
-                DataColumn(label: Text("Actions", style: GoogleFonts.montserrat(color: Colors.white))),
-              ],
-              rows: List<DataRow>.generate(
-                unites.length,
-                (index) {
-                  final u = unites[index];
-                  final isEven = index % 2 == 0;
-                  return DataRow(
-                    color: WidgetStateProperty.all(isEven ? Colors.white : Colors.blue.shade50),
-                    cells: [
-                      DataCell(Text(u['id']?.toString() ?? '')),
-                      DataCell(Text(u['lot']?.toString() ?? '')),
-                      DataCell(Text(u['position']?.toString() ?? '')),
-                      DataCell(Row(
-                        children: [
-                          // Modifier
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Color(0xFF1E3A8A)),
-                            onPressed: () async {
-                              final controller = TextEditingController(text: u['position'] ?? '');
-                              final result = await showDialog<String>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Modifier la position"),
-                                  content: TextField(
-                                    controller: controller,
-                                    decoration: const InputDecoration(labelText: "Position"),
-                                  ),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Annuler")),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(ctx, controller.text),
-                                      child: const Text("Enregistrer"),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (result != null && result != u['position']) {
-                                final success = await ProductService.updateUniteProduit(u['id'], {
-                                  "lot": u['lot'],
-                                  "position": result,
-                                });
-                                if (success) {
-                                  setState(() => u['position'] = result);
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Unité modifiée")));
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erreur lors de la modification")));
-                                }
-                              }
-                            },
-                          ),
-                          // Supprimer
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Confirmation"),
-                                  content: const Text("Voulez-vous vraiment supprimer cette unité ?"),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Annuler")),
-                                    ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Supprimer")),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                final success = await ProductService.deleteUniteProduit(u['id']);
-                                if (success) {
-                                  setState(() => unites.removeWhere((e) => e['id'] == u['id']));
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Unité supprimée")));
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erreur lors de la suppression")));
-                                }
-                              }
-                            },
-                          ),
-                          // Visualiser
-                          IconButton(
-                            icon: const Icon(Icons.remove_red_eye, color: Colors.grey),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Détail de l'unité"),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text("ID : ${u['id']}"),
-                                      Text("Lot : ${u['lot']}"),
-                                      Text("Position : ${u['position']}"),
-                                    ],
-                                  ),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Fermer")),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      )),
+            child: Column(
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(const Color(0xFF1E3A8A)),
+                    headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    columns: [
+                      DataColumn(label: Text("ID", style: GoogleFonts.montserrat(color: Colors.white))),
+                      DataColumn(label: Text("Lot", style: GoogleFonts.montserrat(color: Colors.white))),
+                      DataColumn(label: Text("Position", style: GoogleFonts.montserrat(color: Colors.white))),
+                      DataColumn(label: Text("Actions", style: GoogleFonts.montserrat(color: Colors.white))),
                     ],
-                  );
-                },
-              ),
+                    rows: List<DataRow>.generate(
+                      pageUnites.length,
+                      (index) {
+                        final u = pageUnites[index];
+                        final isEven = index % 2 == 0;
+                        return DataRow(
+                          color: WidgetStateProperty.all(isEven ? Colors.white : Colors.blue.shade50),
+                          cells: [
+                            DataCell(Text(u['id']?.toString() ?? '')),
+                            DataCell(Text(u['lot']?.toString() ?? '')),
+                            DataCell(Text(u['position']?.toString() ?? '')),
+                            DataCell(Row(
+                              children: [
+                                // Modifier
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Color(0xFF1E3A8A)),
+                                  onPressed: () async {
+                                    final controller = TextEditingController(text: u['position'] ?? '');
+                                    final result = await showDialog<String>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text("Modifier la position"),
+                                        content: TextField(
+                                          controller: controller,
+                                          decoration: const InputDecoration(labelText: "Position"),
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Annuler")),
+                                          ElevatedButton(
+                                            onPressed: () => Navigator.pop(ctx, controller.text),
+                                            child: const Text("Enregistrer"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (result != null && result != u['position']) {
+                                      final success = await ProductService.updateUniteProduit(u['id'], {
+                                        "lot": u['lot'],
+                                        "position": result,
+                                      });
+                                      if (success) {
+                                        setState(() => u['position'] = result);
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Unité modifiée")));
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erreur lors de la modification")));
+                                      }
+                                    }
+                                  },
+                                ),
+                                // Supprimer
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text("Confirmation"),
+                                        content: const Text("Voulez-vous vraiment supprimer cette unité ?"),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Annuler")),
+                                          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Supprimer")),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      final success = await ProductService.deleteUniteProduit(u['id']);
+                                      if (success) {
+                                        setState(() => unites.removeWhere((e) => e['id'] == u['id']));
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Unité supprimée")));
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erreur lors de la suppression")));
+                                      }
+                                    }
+                                  },
+                                ),
+                                // Visualiser
+                                IconButton(
+                                  icon: const Icon(Icons.remove_red_eye, color: Colors.grey),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text("Détail de l'unité"),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("ID : ${u['id']}"),
+                                            Text("Lot : ${u['lot']}"),
+                                            Text("Position : ${u['position']}"),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Fermer")),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            )),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('Page ${_currentPage + 1} / ${((unites.length - 1) / _pageSize).floor() + 1}'),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _currentPage > 0
+                          ? () => setState(() => _currentPage--)
+                          : null,
+                      child: const Text('Précédent'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: end < unites.length
+                          ? () => setState(() => _currentPage++)
+                          : null,
+                      child: const Text('Suivant'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

@@ -306,23 +306,25 @@ class _AlertsScreenState extends State<AlertsScreen> {
             ),
             content: SizedBox(
               width: 350,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Type : ${detail['type'] ?? 'Inconnu'}",
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text("Message : ${detail['message'] ?? ''}"),
-                  const SizedBox(height: 8),
-                  Text("Produit : ${detail['produit'] ?? ''}"),
-                  const SizedBox(height: 8),
-                  Text(
-                      "Date : ${detail['date'] ?? detail['created_at'] ?? ''}"),
-                  const SizedBox(height: 8),
-                  Text(
-                      "Utilisateur : ${detail['utilisateur'] ?? detail['user'] ?? ''}"),
-                ],
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Type : ${detail['type'] ?? 'Inconnu'}",
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text("Message : ${detail['message'] ?? ''}"),
+                    const SizedBox(height: 8),
+                    Text("Produit : ${detail['produit'] ?? ''}"),
+                    const SizedBox(height: 8),
+                    Text(
+                        "Date : ${detail['date'] ?? detail['created_at'] ?? ''}"),
+                    const SizedBox(height: 8),
+                    Text(
+                        "Utilisateur : ${detail['utilisateur'] ?? detail['user'] ?? ''}"),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -338,16 +340,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Color _getAlerteColor(Map<String, dynamic> alerte) {
-    final type = (alerte['type'] ?? '').toString().toLowerCase();
-    if (type.contains('inconnu')) {
+    // Si lot_id est null => rouge, sinon bleu
+    if (alerte['lot_id'] == null) {
       return const Color(0xFFB42B51); // Rouge
     }
     return const Color(0xFF1A6FC9); // Bleu
   }
 
   IconData _getAlerteIcon(Map<String, dynamic> alerte) {
-    final type = (alerte['type'] ?? '').toString().toLowerCase();
-    if (type.contains('inconnu')) {
+    if (alerte['lot_id'] == null) {
       return Icons.error_outline;
     }
     return Icons.warning_amber_rounded;
@@ -375,146 +376,231 @@ class _AlertsScreenState extends State<AlertsScreen> {
               onItemSelected: _onSidebarItemSelected,
             ),
           Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF5F5F7), Color(0xFFEAEAEC)],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ENTÊTE STYLÉE
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    vertical: isMobile ? 18 : 32,
+                    horizontal: isMobile ? 16 : 36,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A6FC9),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(isMobile ? 24 : 36),
+                      bottomRight: Radius.circular(isMobile ? 24 : 36),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blueGrey.withOpacity(0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.notifications_active_outlined,
+                          color: Colors.white, size: 32),
+                      const SizedBox(width: 16),
+                      Text(
+                        "Alertes",
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: isMobile ? 22 : 28,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.13),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          "${_alertes.length} alerte${_alertes.length > 1 ? 's' : ''}",
+                          style: GoogleFonts.montserrat(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: isMobile ? 13 : 15,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(isMobile ? 12.0 : 32.0),
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _error != null
-                        ? Center(
-                            child: Text(_error!,
-                                style: const TextStyle(color: Colors.red)))
-                        : _alertes.isEmpty
-                            ? Center(
-                                child: Text(
-                                  "Aucune alerte trouvée.",
-                                  style: GoogleFonts.montserrat(
-                                      fontSize: 18, color: Colors.grey),
-                                ),
-                              )
-                            : ListView.separated(
-                                itemCount: _alertes.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 18),
-                                itemBuilder: (context, i) {
-                                  final alerte = _alertes[i];
-                                  final color = _getAlerteColor(alerte);
-                                  final icon = _getAlerteIcon(alerte);
-                                  String dateStr = (alerte['date'] ??
-                                          alerte['created_at'] ??
-                                          '')
-                                      .toString()
-                                      .replaceAll('T', ' ');
-                                  if (dateStr.length > 16) {
-                                    dateStr = dateStr.substring(0, 16);
-                                  }
-                                  return InkWell(
-                                    borderRadius: BorderRadius.circular(28),
-                                    onTap: () =>
-                                        _showAlerteDetail(alerte['id']),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(24),
-                                      decoration: BoxDecoration(
-                                        color: color.withOpacity(0.09),
-                                        borderRadius: BorderRadius.circular(28),
-                                        border: Border.all(
-                                          color: color.withOpacity(0.25),
-                                          width: 2,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: color.withOpacity(0.08),
-                                            blurRadius: 16,
-                                            offset: const Offset(0, 6),
-                                          ),
-                                        ],
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFFF5F5F7), Color(0xFFEAEAEC)],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(isMobile ? 12.0 : 32.0),
+                      child: _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _error != null
+                              ? Center(
+                                  child: Text(_error!,
+                                      style:
+                                          const TextStyle(color: Colors.red)))
+                              : _alertes.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        "Aucune alerte trouvée.",
+                                        style: GoogleFonts.montserrat(
+                                            fontSize: 18, color: Colors.grey),
                                       ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            width: 54,
-                                            height: 54,
+                                    )
+                                  : ListView.separated(
+                                      itemCount: _alertes.length,
+                                      separatorBuilder: (_, __) =>
+                                          const SizedBox(height: 18),
+                                      itemBuilder: (context, i) {
+                                        final alerte = _alertes[i];
+                                        final color = _getAlerteColor(alerte);
+                                        final icon = _getAlerteIcon(alerte);
+                                        String dateStr = (alerte['date'] ??
+                                                alerte['created_at'] ??
+                                                '')
+                                            .toString()
+                                            .replaceAll('T', ' ');
+                                        if (dateStr.length > 16) {
+                                          dateStr = dateStr.substring(0, 16);
+                                        }
+                                        return InkWell(
+                                          borderRadius:
+                                              BorderRadius.circular(28),
+                                          onTap: () =>
+                                              _showAlerteDetail(alerte['id']),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(24),
                                             decoration: BoxDecoration(
-                                              color: color.withOpacity(0.18),
+                                              color: color.withOpacity(0.09),
                                               borderRadius:
-                                                  BorderRadius.circular(18),
+                                                  BorderRadius.circular(28),
+                                              border: Border.all(
+                                                color: color.withOpacity(0.25),
+                                                width: 2,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color:
+                                                      color.withOpacity(0.08),
+                                                  blurRadius: 16,
+                                                  offset: const Offset(0, 6),
+                                                ),
+                                              ],
                                             ),
-                                            child: Icon(icon,
-                                                color: color, size: 36),
-                                          ),
-                                          const SizedBox(width: 22),
-                                          Expanded(
-                                            child: Column(
+                                            child: Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Text(
-                                                  (alerte['type'] ?? 'Alerte')
-                                                      .toString()
-                                                      .toUpperCase(),
-                                                  style: GoogleFonts.montserrat(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                    color: color,
-                                                    letterSpacing: 1.2,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  alerte['message'] ?? '',
-                                                  style: GoogleFonts.montserrat(
-                                                    fontSize: 16,
+                                                Container(
+                                                  width: 54,
+                                                  height: 54,
+                                                  decoration: BoxDecoration(
                                                     color:
-                                                        const Color(0xFF1A1A2E),
+                                                        color.withOpacity(0.18),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            18),
                                                   ),
+                                                  child: Icon(icon,
+                                                      color: color, size: 36),
                                                 ),
-                                                const SizedBox(height: 10),
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.calendar_today,
-                                                        size: 16, color: color),
-                                                    const SizedBox(width: 6),
-                                                    Text(
-                                                      dateStr,
-                                                      style: GoogleFonts
-                                                          .montserrat(
-                                                              fontSize: 13,
+                                                const SizedBox(width: 22),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        (alerte['id'] ??
+                                                                'Alerte')
+                                                            .toString()
+                                                            .toUpperCase(),
+                                                        style: GoogleFonts
+                                                            .montserrat(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 18,
+                                                          color: color,
+                                                          letterSpacing: 1.2,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        alerte['message'] ?? '',
+                                                        style: GoogleFonts
+                                                            .montserrat(
+                                                          fontSize: 16,
+                                                          color: const Color(
+                                                              0xFF1A1A2E),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                          height: 10),
+                                                      Row(
+                                                        children: [
+                                                          Icon(
+                                                              Icons
+                                                                  .calendar_today,
+                                                              size: 16,
                                                               color: color),
-                                                    ),
-                                                    const SizedBox(width: 18),
-                                                    Icon(Icons.person,
-                                                        size: 16, color: color),
-                                                    const SizedBox(width: 6),
-                                                    Text(
-                                                      (alerte['utilisateur'] ??
-                                                          alerte['user'] ??
-                                                          ''),
-                                                      style: GoogleFonts
-                                                          .montserrat(
-                                                              fontSize: 13,
+                                                          const SizedBox(
+                                                              width: 6),
+                                                          Text(
+                                                            dateStr,
+                                                            style: GoogleFonts
+                                                                .montserrat(
+                                                                    fontSize:
+                                                                        13,
+                                                                    color:
+                                                                        color),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 18),
+                                                          Icon(Icons.person,
+                                                              size: 16,
                                                               color: color),
-                                                    ),
-                                                  ],
+                                                          const SizedBox(
+                                                              width: 6),
+                                                          Text(
+                                                            (alerte['utilisateur'] ??
+                                                                alerte[
+                                                                    'user'] ??
+                                                                ''),
+                                                            style: GoogleFonts
+                                                                .montserrat(
+                                                                    fontSize:
+                                                                        13,
+                                                                    color:
+                                                                        color),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        );
+                                      },
                                     ),
-                                  );
-                                },
-                              ),
-              ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

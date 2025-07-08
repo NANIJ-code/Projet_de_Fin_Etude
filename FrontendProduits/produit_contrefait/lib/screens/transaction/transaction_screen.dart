@@ -637,42 +637,39 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 900;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
       body: Row(
         children: [
-          if (!isMobile)
-            ResponsiveSidebar(
-              selectedIndex: 4, // 4 pour "Transaction"
-              onItemSelected: (i) {
-                setState(() => selectedIndex = i);
-                switch (i) {
-                  case 0:
-                    Navigator.of(context).pushReplacementNamed('/dashboard');
-                    break;
-                  case 1:
-                    Navigator.of(context).pushReplacementNamed('/scan');
-                    break;
-                  case 2:
-                    Navigator.of(context).pushReplacementNamed('/user');
-                    break;
-                  case 3:
-                    Navigator.of(context).pushReplacementNamed('/product');
-                    break;
-                  case 4:
-                    // Déjà sur la page transaction
-                    break;
-                  case 5:
-                    Navigator.of(context).pushReplacementNamed('/alerts');
-                    break;
-                  case 6:
-                    Navigator.of(context).pushReplacementNamed('/settings');
-                    break;
-                }
-              },
-            ),
-          // Main content
+          ResponsiveSidebar(
+            selectedIndex: selectedIndex,
+            onItemSelected: (i) {
+              setState(() => selectedIndex = i);
+              switch (i) {
+                case 0:
+                  Navigator.of(context).pushReplacementNamed('/dashboard');
+                  break;
+                case 1:
+                  Navigator.of(context).pushReplacementNamed('/scan');
+                  break;
+                case 2:
+                  Navigator.of(context).pushReplacementNamed('/user');
+                  break;
+                case 3:
+                  Navigator.of(context).pushReplacementNamed('/product');
+                  break;
+                case 4:
+                  // Déjà sur la page transaction
+                  break;
+                case 5:
+                  Navigator.of(context).pushReplacementNamed('/alerts');
+                  break;
+                case 6:
+                  Navigator.of(context).pushReplacementNamed('/settings');
+                  break;
+              }
+            },
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24.0),

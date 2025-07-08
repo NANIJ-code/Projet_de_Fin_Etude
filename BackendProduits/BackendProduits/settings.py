@@ -50,8 +50,6 @@ INSTALLED_APPS = [
     # API REST
     'users',  
     # Application pour la gestion des utilisateurs
-    'gmailapi_backend' 
-    # Application pour la gestion de l'API Gmail
 ]
 
 """ Configuration REST Framework 
@@ -64,6 +62,9 @@ REST_FRAMEWORK = {
     # 'PAGE_SIZE': 100,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
     ),
 }
 
@@ -83,7 +84,7 @@ ROOT_URLCONF = 'BackendProduits.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -142,11 +143,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # modèle utilisateur personnalisé
-AUTH_USER_MODEL = 'users.Compte'
+AUTH_USER_MODEL = 'users.Utilisateur'
 
 FRONTEND_LOGIN_URL = "https://monappflutter.com/"  # ou l'URL de ton frontend
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),  # Par défaut 5 min, à adapter
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # Par défaut 5 min, à adapter
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
@@ -185,12 +186,11 @@ CORS_ALLOW_ALL_ORIGINS = True
 # # Autoriser les cookies et les en-têtes d'authentification
 
 
-<<<<<<< HEAD
-=======
 # configuration pour envoie des mails
-EMAIL_BACKEND = 'gmailapi_backend.mail.GmailBackend'
-GMAIL_API_CLIENT_ID = '115001624773-9donhivp1sbds0mot8qdkm1l8prbjmu1.apps.googleusercontent.com'
-GMAIL_API_CLIENT_SECRET = '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'
-GMAIL_API_REFRESH_TOKEN = '1//04eVDqUP8B_RoCgYIARAAGAQSNgF-L9IrAgRotji1yGjQG0LjC96jfJIxfwCMCN8rNlVitIrIQZNJITrarqw7PBXuTwFCyNBvoQ'
-DEFAULT_FROM_EMAIL = 'nanchiivan65@gmail.com'
->>>>>>> c30bdadf5507b66cdb49b7bca5ddf2553c8b0e49
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = '587'
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'mediscan814@gmail.com'
+EMAIL_HOST_PASSWORD = 'fbua jmjb kzgu qemh'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

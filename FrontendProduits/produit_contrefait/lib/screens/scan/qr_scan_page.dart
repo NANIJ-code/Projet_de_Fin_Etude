@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, unused_field
+// ignore_for_file: use_build_context_synchronously, unused_field, deprecated_member_use
 
 import 'dart:typed_data';
 import 'dart:convert';
@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io;
 import 'package:qr_code_tools/qr_code_tools.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class QrScanOrImportPage extends StatefulWidget {
   const QrScanOrImportPage({Key? key}) : super(key: key);
@@ -363,9 +364,9 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
         _backendResult = backendData as Map<String, dynamic>;
         // Gestion couleur/message selon le backend
         final msg = _backendResult?['message']?.toString().toLowerCase() ?? '';
-        if (msg.contains('suspect')) {
+        if (msg.contains('contacter')) {
           _backendMsgColor = Colors.blue;
-        } else if (msg.contains('inconnu')) {
+        } else if (msg.contains('pas reconnu')) {
           _backendMsgColor = Colors.red;
         } else {
           _backendMsgColor = Colors.green;
@@ -384,20 +385,21 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
   }
 
   Future<void> _envoyerAlerte(String userMessage) async {
-    debugPrint('Envoi d\'une alerte...');
     final token = await _getToken();
 
     String url;
     Map<String, dynamic> body;
 
+    // On récupère l'UUID si le produit est connu
     final uuid = _backendResult?['uuid'] ?? _backendResult?['uuid_produit'];
-    if (uuid != null && uuid != "null") {
+    if (uuid != null && uuid != "null" && uuid.toString().isNotEmpty) {
       url =
           'http://localhost:8000/api_produits/unite_produit/alerte/?uuid=$uuid';
       body = {
         'message': userMessage,
       };
     } else {
+      // Produit inconnu
       url = 'http://localhost:8000/api_produits/unite_produit/alerte/';
       body = {
         'code_scanned': _scanResult ?? '',
@@ -413,19 +415,22 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
       },
       body: json.encode(body),
     );
-    debugPrint(
-        'Réponse de l\'alerte : status=${response.statusCode}, body=${response.body}');
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Alerte envoyée au backend !"),
-            backgroundColor: Colors.green),
+          content: Text("Alerte envoyée au backend !"),
+          backgroundColor: Colors.green,
+        ),
       );
+      // Optionnel : rafraîchir la liste des alertes si tu es sur la page alertes
+      // await _fetchAlertes(); // à implémenter si besoin
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text("Erreur backend : ${response.body}"),
-            backgroundColor: Colors.red),
+          content: Text("Erreur backend : ${response.body}"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -469,6 +474,18 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
     }
   }
 
+  String _getProductStatus() {
+    final msg = (_backendMsg ?? '').toLowerCase();
+    if (msg.contains('operation') || msg.contains('contacter')) {
+      return 'suspect';
+    } else if (msg.contains('pas reconnu') || msg.contains('n\'est pas reconnu') || msg.contains('lancer une alerte') || msg.contains('non reconnu')) {
+      return 'inconnu';
+    } else if (msg.contains('produit reconnu')) {
+      return 'bon';
+    }
+    return 'inconnu';
+  }
+
   @override
   void dispose() {
     debugPrint('Disposing CameraController...');
@@ -480,315 +497,455 @@ class _QrScanOrImportPageState extends State<QrScanOrImportPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scanner ou Importer un QR Code'),
-        backgroundColor: const Color(0xFF42A5F5),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF42A5F5), Color(0xFF1976D2), Color(0xFFF5F5F7)],
+        ),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue),
-              ),
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : (_controller != null && _controller!.value.isInitialized)
-                      ? CameraPreview(_controller!)
-                      : Center(
-                          child: Text(
-                            _error ?? "Impossible d'accéder à la caméra.",
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
-                          ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(
+            'Scanner ou Importer un QR Code',
+            style: GoogleFonts.playfairDisplay(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 26,
+            ),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Card(
+                  elevation: 12,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Container(
+                    width: 340,
+                    height: 340,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: const Color(0xFF42A5F5),
+                        width: 4,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.15),
+                          blurRadius: 24,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 8),
                         ),
-            ),
-            const SizedBox(height: 10),
-            if (_isScanning)
-              const Text(
-                'Scanning en cours... Pointez la caméra vers un QR code.',
-                style:
-                    TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-              ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: _isScanning ? null : _pickImageAndDecode,
-              icon: const Icon(Icons.image),
-              label: const Text("Importer une image"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1976D2),
-                foregroundColor: Colors.white,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed:
-                        _isLoading || _isScanning ? null : _startScanning,
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text("Scanner avec la caméra"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF42A5F5),
-                      foregroundColor: Colors.white,
+                      ],
                     ),
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : (_controller != null &&
+                                _controller!.value.isInitialized)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: CameraPreview(_controller!),
+                              )
+                            : Center(
+                                child: Text(
+                                  _error ?? "Impossible d'accéder à la caméra.",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: _isScanning ? _stopScanning : null,
-                    icon: const Icon(Icons.stop),
-                    label: const Text("Arrêter le scan"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_scanResult != null &&
-                _backendResult != null &&
-                _backendResult!['error'] == null) ...[
-              const SizedBox(height: 20),
-              Card(
-                elevation: 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Column(
+                ),
+                const SizedBox(height: 18),
+                if (_isScanning)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Résultat du scan :",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 3),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(width: 12),
                       Text(
-                        _scanResult!,
-                        style:
-                            const TextStyle(fontSize: 18, color: Colors.green),
-                      ),
-                      const SizedBox(height: 12),
-                      if (_backendMsg != null)
-                        Padding(
-                          padding:
-                              const EdgeInsets.only(top: 12.0, bottom: 8.0),
-                          child: Text(
-                            _backendMsg!,
-                            style: TextStyle(
-                              color: _backendMsgColor ?? Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                        'Scanning en cours... Pointez la caméra vers un QR code.',
+                        style: GoogleFonts.montserrat(
+                          color: Colors.blue[900],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              // 3. DEMANDER UN MESSAGE AVANT ENVOI
-                              final TextEditingController msgController =
-                                  TextEditingController();
-                              final result = await showDialog<String>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Message d'alerte"),
-                                  content: TextField(
-                                    controller: msgController,
-                                    maxLines: 3,
-                                    decoration: const InputDecoration(
-                                      hintText:
-                                          "Saisissez le message à envoyer avec l'alerte",
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(ctx),
-                                      child: const Text("Annuler"),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(
-                                          ctx, msgController.text.trim()),
-                                      child: const Text("Envoyer"),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (result != null && result.isNotEmpty) {
-                                await _envoyerAlerte(result);
-                              }
-                            },
-                            icon: const Icon(Icons.warning),
-                            label: const Text("Alerter"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // 2. BOUTON POSITION SI PRODUIT RECONNU
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final uuid = _backendResult?['uuid'] ??
-                                  _backendResult?['uuid_produit'];
-                              if (uuid == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text("UUID manquant"),
-                                      backgroundColor: Colors.red),
-                                );
-                                return;
-                              }
-
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title:
-                                      const Text("Mettre à jour la position"),
-                                  content: const Text(
-                                      "Voulez-vous enregistrer votre nom comme position de l'objet ?"),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, false),
-                                      child: const Text("Annuler"),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(ctx, true),
-                                      child: const Text("Mettre à jour"),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                final token = await _getToken();
-                                final response = await http.post(
-                                  Uri.parse(
-                                      'http://localhost:8000/api_produits/unite_produit/maj-position/?uuid=$uuid'),
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                    if (token != null)
-                                      'Authorization': 'Bearer $token',
-                                  },
-                                );
-                                if (response.statusCode == 200) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text("Position mise à jour !"),
-                                        backgroundColor: Colors.green),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content:
-                                            Text("Erreur : ${response.body}"),
-                                        backgroundColor: Colors.red),
-                                  );
-                                }
-                              }
-                            },
-                            icon: const Icon(Icons.location_on),
-                            label: const Text("Position"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final uuid = _backendResult?['uuid'] ??
-                                  _backendResult?['uuid_produit'];
-                              if (uuid == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text("UUID manquant"),
-                                      backgroundColor: Colors.red),
-                                );
-                                return;
-                              }
-                              final token = await _getToken();
-                              final response = await http.get(
-                                Uri.parse(
-                                    'http://localhost:8000/api_produits/unite_produit/historique/?uuid=$uuid'),
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  if (token != null)
-                                    'Authorization': 'Bearer $token',
-                                },
-                              );
-                              if (response.statusCode == 200) {
-                                final historique = json.decode(response.body);
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Text("Historique du produit"),
-                                    content: SizedBox(
-                                      width: 400,
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: historique.length,
-                                        itemBuilder: (ctx, i) {
-                                          final h = historique[i];
-                                          return ListTile(
-                                            title: Text(h['titre'] ?? ''),
-                                            subtitle: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(h['date'] ?? '',
-                                                    style: const TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey)),
-                                                ...((h['details'] as List?) ??
-                                                        [])
-                                                    .map((d) =>
-                                                        Text(d.toString()))
-                                                    .toList(),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        child: const Text("Fermer"),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text(
-                                          "Erreur historique : ${response.body}"),
-                                      backgroundColor: Colors.red),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.history),
-                            label: const Text("Historique"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _isScanning ? null : _pickImageAndDecode,
+                      icon: const Icon(Icons.image, size: 22),
+                      label: Text("Importer une image",
+                          style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1976D2),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 14),
+                        elevation: 6,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed:
+                          _isLoading || _isScanning ? null : _startScanning,
+                      icon: const Icon(Icons.qr_code_scanner, size: 22),
+                      label: Text("Scanner",
+                          style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF42A5F5),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 14),
+                        elevation: 6,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed: _isScanning ? _stopScanning : null,
+                      icon: const Icon(Icons.stop, size: 22),
+                      label: Text("Arrêter",
+                          style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 14),
+                        elevation: 6,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ],
+                if (_scanResult != null &&
+                    _backendResult != null &&
+                    _backendResult!['error'] == null) ...[
+                  const SizedBox(height: 28),
+                  Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(22),
+                      child: Column(
+                        children: [
+                          Text(
+                            "Résultat du scan",
+                            style: GoogleFonts.playfairDisplay(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              color: const Color(0xFF1A1A2E),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _scanResult!,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 18,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          if (_backendMsg != null)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: (_backendMsgColor ?? Colors.green)
+                                    .withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _backendMsgColor ?? Colors.green,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Text(
+                                _backendMsg!,
+                                style: GoogleFonts.montserrat(
+                                  color: _backendMsgColor ?? Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          const SizedBox(height: 18),
+                          // PUIS dans la liste des widgets :
+                          Wrap(
+                            spacing: 14,
+                            runSpacing: 10,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              if (_getProductStatus() == 'suspect' || _getProductStatus() == 'inconnu')
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    // 3. DEMANDER UN MESSAGE AVANT ENVOI
+                                    final TextEditingController msgController =
+                                        TextEditingController();
+                                    final result = await showDialog<String>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text("Message d'alerte"),
+                                        content: TextField(
+                                          controller: msgController,
+                                          maxLines: 3,
+                                          decoration: const InputDecoration(
+                                            hintText:
+                                                "Saisissez le message à envoyer avec l'alerte",
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            child: const Text("Annuler"),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () => Navigator.pop(
+                                                ctx, msgController.text.trim()),
+                                            child: const Text("Envoyer"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (result != null && result.isNotEmpty) {
+                                      await _envoyerAlerte(result);
+                                    }
+                                  },
+                                  icon: const Icon(Icons.warning_amber_rounded),
+                                  label: Text("Alerter",
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w600)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 18, vertical: 12),
+                                    elevation: 4,
+                                  ),
+                                ),
+                              if (_getProductStatus() == 'suspect' || _getProductStatus() == 'bon')
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    // Utilise directement le code QR scanné
+                                    final codeQr = _scanResult;
+                                    if (codeQr == null || codeQr.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text("Code QR manquant"),
+                                            backgroundColor: Colors.red),
+                                      );
+                                      return;
+                                    }
+
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text(
+                                            "Mettre à jour la position"),
+                                        content: const Text(
+                                            "Voulez-vous enregistrer votre nom comme position de l'objet ?"),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, false),
+                                            child: const Text("Annuler"),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, true),
+                                            child: const Text("Mettre à jour"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      final token = await _getToken();
+                                      final response = await http.post(
+                                        Uri.parse(
+                                            'http://localhost:8000/api_produits/unite_produit/maj-position/?uuid=$codeQr'),
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          if (token != null)
+                                            'Authorization': 'Bearer $token',
+                                        },
+                                      );
+                                      if (response.statusCode == 200) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content:
+                                                  Text("Position mise à jour !"),
+                                              backgroundColor: Colors.green),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  "Erreur : ${response.body}"),
+                                              backgroundColor: Colors.red),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Icons.location_on),
+                                  label: Text("Position",
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w600)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 18, vertical: 12),
+                                    elevation: 4,
+                                  ),
+                                ),
+                              if (_getProductStatus() == 'suspect' || _getProductStatus() == 'bon')
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final codeQr = _scanResult;
+                                    if (codeQr == null || codeQr.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text("Code QR manquant"),
+                                            backgroundColor: Colors.red),
+                                      );
+                                      return;
+                                    }
+                                    final token = await _getToken();
+                                    final response = await http.get(
+                                      Uri.parse(
+                                          'http://localhost:8000/api_produits/unite_produit/historique/?uuid=$codeQr'),
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        if (token != null)
+                                          'Authorization': 'Bearer $token',
+                                      },
+                                    );
+                                    if (response.statusCode == 200) {
+                                      final historique =
+                                          json.decode(response.body);
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title:
+                                              const Text("Historique du produit"),
+                                          content: SizedBox(
+                                            width: 400,
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: historique.length,
+                                              itemBuilder: (ctx, i) {
+                                                final h = historique[i];
+                                                return ListTile(
+                                                  title: Text(h['titre'] ?? ''),
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(h['date'] ?? '',
+                                                          style: const TextStyle(
+                                                              fontSize: 12,
+                                                              color:
+                                                                  Colors.grey)),
+                                                      ...((h['details']
+                                                                  as List?) ??
+                                                              [])
+                                                          .map((d) =>
+                                                              Text(d.toString()))
+                                                          .toList(),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx),
+                                              child: const Text("Fermer"),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                "Erreur historique : ${response.body}"),
+                                            backgroundColor: Colors.red),
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(Icons.history),
+                                  label: Text("Historique",
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w600)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 18, vertical: 12),
+                                    elevation: 4,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

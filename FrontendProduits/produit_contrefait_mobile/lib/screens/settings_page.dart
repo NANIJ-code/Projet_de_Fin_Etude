@@ -69,8 +69,14 @@ class SettingsPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: ListTile(
-                      leading: const Icon(Icons.notifications, color: Color(0xFF4E4FEB)),
-                      title: Text('Notifications', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                      leading: const Icon(
+                        Icons.notifications,
+                        color: Color(0xFF4E4FEB),
+                      ),
+                      title: Text(
+                        'Notifications',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                      ),
                       trailing: Switch(value: true, onChanged: (_) {}),
                     ),
                   ),
@@ -81,9 +87,19 @@ class SettingsPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: ListTile(
-                      leading: const Icon(Icons.security, color: Color(0xFF4E4FEB)),
-                      title: Text('Confidentialité', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+                      leading: const Icon(
+                        Icons.security,
+                        color: Color(0xFF4E4FEB),
+                      ),
+                      title: Text(
+                        'Confidentialité',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -94,8 +110,15 @@ class SettingsPage extends StatelessWidget {
                     ),
                     child: ListTile(
                       leading: const Icon(Icons.help, color: Color(0xFF4E4FEB)),
-                      title: Text('Aide', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+                      title: Text(
+                        'Aide',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ],
@@ -104,7 +127,7 @@ class SettingsPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: _buildCustomBottomNav(context, 3),
+      bottomNavigationBar: _buildCustomBottomNav(context, 2),
     );
   }
 }
@@ -112,97 +135,69 @@ class SettingsPage extends StatelessWidget {
 // Nav bar stylée et réutilisable
 Widget _buildCustomBottomNav(BuildContext context, int selectedIndex) {
   return Container(
-    height: 70,
-    margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8), // marge réduite
+    height: 80,
+    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
     decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.92),
-      borderRadius: BorderRadius.circular(22),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(25),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF1976D2).withOpacity(0.10),
-          blurRadius: 18,
-          spreadRadius: 1,
-          offset: const Offset(0, 4),
+          color: const Color(0xFF1976D2).withOpacity(0.1),
+          blurRadius: 20,
+          spreadRadius: 2,
         ),
       ],
-      border: Border.all(
-        color: const Color(0xFF4E4FEB).withOpacity(0.07),
-        width: 1,
-      ),
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        for (var i = 0; i < 4; i++)
-          _navItem(context, _navIcons[i], _navLabels[i], i, selectedIndex),
+        _navItem(context, Icons.home_rounded, 'Accueil', 0, selectedIndex),
+        _navItem(context, Icons.chat_bubble_outline, 'Chat', 1, selectedIndex),
+        _navItem(context, Icons.settings_rounded, 'Outils', 2, selectedIndex),
       ],
     ),
   );
 }
 
-const List<IconData> _navIcons = [
-  Icons.home_rounded,
-  Icons.history_rounded,
-  Icons.chat_bubble_rounded,
-  Icons.settings_rounded,
-];
-
-const List<String> _navLabels = [
-  'Accueil',
-  'Historique',
-  'Chat',
-  'Outils',
-];
-
-Widget _navItem(BuildContext context, IconData icon, String label, int index, int selectedIndex) {
-  final bool isSelected = selectedIndex == index;
-  return Flexible(
-    fit: FlexFit.tight,
-    child: GestureDetector(
-      onTap: () {
-        if (index == 0) Navigator.pushNamed(context, '/');
-        if (index == 1) Navigator.pushNamed(context, '/historique');
-        if (index == 2) Navigator.pushNamed(context, '/chat');
-        if (index == 3) Navigator.pushNamed(context, '/settings');
-      },
-      child: AnimatedContainer(
-        duration: 300.ms,
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4), // réduit
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4E4FEB).withOpacity(0.13) : Colors.transparent,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF4E4FEB).withOpacity(0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? const Color(0xFF4E4FEB) : Colors.grey.shade500,
-              size: isSelected ? 26 : 22, // réduit
+Widget _navItem(
+  BuildContext context,
+  IconData icon,
+  String label,
+  int index,
+  int selectedIndex,
+) {
+  bool isSelected = selectedIndex == index;
+  return GestureDetector(
+    onTap: () {
+      if (index == 0) Navigator.pushNamed(context, '/');
+      if (index == 1) Navigator.pushNamed(context, '/chat');
+      if (index == 2) Navigator.pushNamed(context, '/settings');
+    },
+    child: AnimatedContainer(
+      duration: 300.ms,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? const Color(0xFF1976D2) : Colors.grey,
+            size: isSelected ? 28 : 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: isSelected ? const Color(0xFF1976D2) : Colors.grey,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
-            const SizedBox(height: 2), // réduit
-            AnimatedDefaultTextStyle(
-              duration: 300.ms,
-              style: GoogleFonts.poppins(
-                fontSize: 11, // réduit
-                color: isSelected ? const Color(0xFF4E4FEB) : Colors.grey.shade600,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-                letterSpacing: 0.2,
-              ),
-              child: Text(label),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     ),
   );

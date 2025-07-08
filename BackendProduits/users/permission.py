@@ -10,7 +10,7 @@ class UtilisateurPermission(BasePermission):
         if request.method in SAFE_METHODS:
             return request.user.is_authenticated
 
-        utilisateur = getattr(request.user, 'user', None)
+        utilisateur = getattr(request.user,  None)
         if not (request.user.is_authenticated and utilisateur):
             return False
 

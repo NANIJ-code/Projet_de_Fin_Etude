@@ -339,7 +339,7 @@ class _ChatPageState extends State<ChatPage> {
       ),
       bottomNavigationBar: _buildCustomBottomNav(
         context,
-        2,
+        1,
       ), // 2 = index du chat
     );
   }
@@ -365,9 +365,8 @@ Widget _buildCustomBottomNav(BuildContext context, int selectedIndex) {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _navItem(context, Icons.home, 'Accueil', 0, selectedIndex),
-        _navItem(context, Icons.history, 'Historique', 1, selectedIndex),
-        _navItem(context, Icons.chat_bubble_outline, 'Chat', 2, selectedIndex),
-        _navItem(context, Icons.settings, 'Outils', 3, selectedIndex),
+        _navItem(context, Icons.chat_bubble_outline, 'Chat', 1, selectedIndex),
+        _navItem(context, Icons.settings, 'Outils', 2, selectedIndex),
       ],
     ),
   );
@@ -384,9 +383,8 @@ Widget _navItem(
   return GestureDetector(
     onTap: () {
       if (index == 0) Navigator.pushNamed(context, '/');
-      if (index == 1) Navigator.pushNamed(context, '/historique');
-      if (index == 2) Navigator.pushNamed(context, '/chat');
-      if (index == 3) Navigator.pushNamed(context, '/settings');
+      if (index == 1) Navigator.pushNamed(context, '/chat');
+      if (index == 2) Navigator.pushNamed(context, '/settings');
     },
     child: AnimatedContainer(
       duration: 300.ms,

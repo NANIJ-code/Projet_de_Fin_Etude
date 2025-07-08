@@ -6,203 +6,7 @@ import 'package:universal_html/html.dart' as html;
 import '../../services/product_service.dart';
 import 'unite_produit_screen.dart';
 
-class ResponsiveSidebar extends StatefulWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onItemSelected;
-  const ResponsiveSidebar({
-    super.key,
-    required this.selectedIndex,
-    required this.onItemSelected,
-  });
-
-  @override
-  State<ResponsiveSidebar> createState() => _ResponsiveSidebarState();
-}
-
-class NavItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const NavItem(this.icon, this.label, this.route);
-}
-
-final List<NavItem> navItems = [
-  const NavItem(Icons.space_dashboard_outlined, "Dashboard", '/dashboard'),
-  const NavItem(Icons.qr_code_2_rounded, "Scan", '/scan'),
-  const NavItem(Icons.account_circle_outlined, "Utilisateur", '/user'),
-  const NavItem(Icons.inventory_2_outlined, "Produits", '/product'),
-  const NavItem(Icons.swap_horiz, "Transaction", '/transaction'),
-  const NavItem(Icons.notifications_active_outlined, "Alertes", '/alerts'),
-  const NavItem(Icons.settings, "Paramètres", '/settings'),
-];
-
-class _ResponsiveSidebarState extends State<ResponsiveSidebar> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-    final sidebarWidth = _isHovered || isMobile ? 200.0 : 70.0;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: sidebarWidth,
-        constraints: BoxConstraints(maxWidth: sidebarWidth),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blueGrey.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Center(
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A6FC9).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.security,
-                    color: Color(0xFF1A6FC9), size: 24),
-              ),
-            ),
-            if (_isHovered || isMobile)
-              Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 6),
-                child: Text(
-                  "SecureScan",
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 18,
-                    color: const Color(0xFF1A6FC9),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 12),
-            ...List.generate(navItems.length, (i) {
-              final item = navItems[i];
-              final isActive = widget.selectedIndex == i;
-              return InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => widget.onItemSelected(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 2,
-                    horizontal: _isHovered || isMobile ? 6 : 0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? const Color(0xFF1A6FC9).withOpacity(0.13)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? const Color(0xFF1A6FC9).withOpacity(0.18)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          item.icon,
-                          color: isActive
-                              ? const Color(0xFF1A6FC9)
-                              : const Color(0xFFB3B8C8),
-                          size: 22,
-                        ),
-                      ),
-                      if (_isHovered || isMobile)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Text(
-                            item.label,
-                            style: GoogleFonts.montserrat(
-                              color: isActive
-                                  ? const Color(0xFF1A6FC9)
-                                  : const Color(0xFFB3B8C8),
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const Spacer(),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A6FC9).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.person,
-                          color: Color(0xFF1A6FC9), size: 22),
-                    ),
-                    if (_isHovered || isMobile)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Admin",
-                              style: GoogleFonts.montserrat(
-                                color: const Color(0xFF1A6FC9),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Text(
-                              "Administrateur",
-                              style: GoogleFonts.montserrat(
-                                color: Colors.blueGrey,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+import '../../widgets/responsive_sidebar.dart'; // adapte le chemin si besoin
 
 // --- ProductScreen responsive ---
 class ProductScreen extends StatefulWidget {
@@ -222,7 +26,7 @@ class _ProductScreenState extends State<ProductScreen> {
   String? _error;
   int _produitPage = 0;
   int _lotPage = 0;
-  final int _pageSize = 10;
+  final int _pageSize = 5;
   int selectedIndex = 3; // Correspond à "Produits" dans la sidebar
   String? nomProduit, prixProduit, descProduit, fournisseurProduit;
   String? produitLot, quantiteLot, dateExpLot;
@@ -607,7 +411,29 @@ class _ProductScreenState extends State<ProductScreen> {
             selectedIndex: selectedIndex,
             onItemSelected: (i) {
               setState(() => selectedIndex = i);
-              Navigator.of(context).pushReplacementNamed(navItems[i].route);
+              switch (i) {
+                case 0:
+                  Navigator.of(context).pushReplacementNamed('/dashboard');
+                  break;
+                case 1:
+                  Navigator.of(context).pushReplacementNamed('/scan');
+                  break;
+                case 2:
+                  Navigator.of(context).pushReplacementNamed('/user');
+                  break;
+                case 3:
+                  // Déjà sur la page produit
+                  break;
+                case 4:
+                  Navigator.of(context).pushReplacementNamed('/transaction');
+                  break;
+                case 5:
+                  Navigator.of(context).pushReplacementNamed('/alerts');
+                  break;
+                case 6:
+                  Navigator.of(context).pushReplacementNamed('/settings');
+                  break;
+              }
             },
           ),
           Expanded(

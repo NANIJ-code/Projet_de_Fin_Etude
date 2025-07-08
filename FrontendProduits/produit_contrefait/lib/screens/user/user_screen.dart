@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/user_service.dart';
-import '../dashboard/dashboard_screen.dart'; // Pour ResponsiveSidebar
+import '../../widgets/responsive_sidebar.dart'; // adapte le chemin si besoin
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -292,7 +292,6 @@ class _UserScreenState extends State<UserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 900;
 
     // Affiche un loader tant que le rôle n'est pas chargé
     if (_currentRole == null) {
@@ -303,36 +302,35 @@ class _UserScreenState extends State<UserScreen> {
       backgroundColor: const Color(0xFFF7F9FB),
       body: Row(
         children: [
-          if (!isMobile)
-            ResponsiveSidebar(
-              selectedIndex: selectedSidebarIndex,
-              onItemSelected: (i) {
-                setState(() => selectedSidebarIndex = i);
-                switch (i) {
-                  case 0:
-                    Navigator.of(context).pushReplacementNamed('/dashboard');
-                    break;
-                  case 1:
-                    Navigator.of(context).pushReplacementNamed('/scan');
-                    break;
-                  case 2:
-                    // Déjà sur la page utilisateur
-                    break;
-                  case 3:
-                    Navigator.of(context).pushReplacementNamed('/product');
-                    break;
-                  case 4:
-                    Navigator.of(context).pushReplacementNamed('/transaction');
-                    break;
-                  case 5:
-                    Navigator.of(context).pushReplacementNamed('/alerts');
-                    break;
-                  case 6:
-                    Navigator.of(context).pushReplacementNamed('/settings');
-                    break;
-                }
-              },
-            ),
+          ResponsiveSidebar(
+            selectedIndex: selectedSidebarIndex,
+            onItemSelected: (i) {
+              setState(() => selectedSidebarIndex = i);
+              switch (i) {
+                case 0:
+                  Navigator.of(context).pushReplacementNamed('/dashboard');
+                  break;
+                case 1:
+                  Navigator.of(context).pushReplacementNamed('/scan');
+                  break;
+                case 2:
+                  // Déjà sur la page utilisateur
+                  break;
+                case 3:
+                  Navigator.of(context).pushReplacementNamed('/product');
+                  break;
+                case 4:
+                  Navigator.of(context).pushReplacementNamed('/transaction');
+                  break;
+                case 5:
+                  Navigator.of(context).pushReplacementNamed('/alerts');
+                  break;
+                case 6:
+                  Navigator.of(context).pushReplacementNamed('/settings');
+                  break;
+              }
+            },
+          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(32),

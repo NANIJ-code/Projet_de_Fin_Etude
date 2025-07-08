@@ -316,9 +316,8 @@ class _HomeScanPageState extends State<HomeScanPage> with TickerProviderStateMix
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavItem(Icons.home, 'Accueil', 0),
-          _buildNavItem(Icons.history, 'Historique', 1),
-          _buildNavItem(Icons.chat_bubble_outline, 'Chat', 2), // Ajouté
-          _buildNavItem(Icons.settings, 'Outils', 3),
+          _buildNavItem(Icons.chat_bubble_outline, 'Chat', 1),
+          _buildNavItem(Icons.settings, 'Outils', 2),
         ],
       ),
     );
@@ -329,10 +328,9 @@ class _HomeScanPageState extends State<HomeScanPage> with TickerProviderStateMix
     return GestureDetector(
       onTap: () {
         setState(() => selectedIndex = index);
-        if (index == 1) Navigator.pushNamed(context, '/historique');
-        if (index == 2) Navigator.pushNamed(context, '/chat');        // Ajouté
-        if (index == 3) Navigator.pushNamed(context, '/settings');
         if (index == 0) Navigator.pushNamed(context, '/');
+        if (index == 1) Navigator.pushNamed(context, '/chat');
+        if (index == 2) Navigator.pushNamed(context, '/settings');
       },
       child: AnimatedContainer(
         duration: 300.ms,
